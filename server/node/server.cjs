@@ -1,18 +1,26 @@
 const express = require('express');
+const compression = require('compression')
 const app = express();
 const path = require('path');
 const htmlparser = require('node-html-parser');
 const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs');
 const fs = require('fs/promises')
 const crypto = require('crypto')
+app.use(compression({
+    filter: (req, res) => {
+        const type = res.getHeader('Content-Type');
+        if (type === 'application/octet-stream') return true;
+        return compression.filter(req, res);
+    }
+}));
 app.use(express.static(path.join(process.cwd(), 'dist'), {index: false}));
-app.use(express.json({ limit: '100mb' }));
-app.use(express.raw({ type: 'application/octet-stream', limit: '100mb' }));
-app.use(express.text({ limit: '100mb' }));
+app.use(express.json({ limit: '500mb' }));
+app.use(express.raw({ type: 'application/octet-stream', limit: '500mb' }));
+app.use(express.text({ limit: '500mb' }));
 const {pipeline} = require('stream/promises')
 const https = require('https');
 const sslPath = path.join(process.cwd(), 'server/node/ssl/certificate');
-const hubURL = 'https://sv.risuai.xyz'; 
+const hubURL = 'https://sv.risuai.xyz';
 const openid = require('openid-client');
 
 let password = ''
@@ -38,13 +46,13 @@ app.get('/', async (req, res, next) => {
     const clientIP = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown IP';
     const timestamp = new Date().toISOString();
     console.log(`[Server] ${timestamp} | Connection from: ${clientIP}`);
-    
+
     try {
         const mainIndex = await fs.readFile(path.join(process.cwd(), 'dist', 'index.html'))
         const root = htmlparser.parse(mainIndex)
         const head = root.querySelector('head')
         head.innerHTML = `<script>globalThis.__NODE__ = true</script>` + head.innerHTML
-        
+
         res.send(root.toString())
     } catch (error) {
         console.log(error)
@@ -61,7 +69,7 @@ const reverseProxyFunc = async (req, res, next) => {
         });
         return
     }
-    
+
     const urlParam = req.headers['risu-url'] ? decodeURIComponent(req.headers['risu-url']) : req.query.url;
 
     if (!urlParam) {
@@ -129,7 +137,7 @@ const reverseProxyFunc_get = async (req, res, next) => {
         });
         return
     }
-    
+
     const urlParam = req.headers['risu-url'] ? decodeURIComponent(req.headers['risu-url']) : req.query.url;
 
     if (!urlParam) {
@@ -189,7 +197,7 @@ async function getSionywAccessToken() {
     //     client_id: string;
     //     client_secret: string;
     // }
-    
+
     const clientDataPath = path.join(process.cwd(), 'save', '__sionyw_client_data.json');
     let refreshToken = ''
     let clientId = ''
@@ -204,7 +212,7 @@ async function getSionywAccessToken() {
     clientSecret = clientData.client_secret;
 
     //Oauth Refresh Token Flow
-    
+
     const tokenResponse = await fetch('account.sionyw.com/account/api/oauth/token', {
         method: 'POST',
         headers: {
@@ -255,7 +263,7 @@ async function hubProxyFunc(req, res) {
             const pathAndQuery = req.originalUrl.replace(/^\/hub-proxy/, '');
             externalURL = hubURL + pathAndQuery;
         }
-        
+
         const headersToSend = { ...req.headers };
         delete headersToSend.host;
         delete headersToSend.connection;
@@ -277,8 +285,8 @@ async function hubProxyFunc(req, res) {
             headersToSend['Authorization'] = "Bearer " + await getSionywAccessToken();
             delete headersToSend['risu-auth'];
         }
-        
-        
+
+
         const response = await fetch(externalURL, {
             method: req.method,
             headers: headersToSend,
@@ -286,7 +294,7 @@ async function hubProxyFunc(req, res) {
             redirect: 'manual',
             duplex: 'half'
         });
-        
+
         for (const [key, value] of response.headers.entries()) {
             // Skip encoding-related headers to prevent double decoding
             if (excludedHeaders.includes(key.toLowerCase())) {
@@ -320,13 +328,13 @@ async function hubProxyFunc(req, res) {
             }
             return;
         }
-        
+
         if (response.body) {
             await pipeline(response.body, res);
         } else {
             res.end();
         }
-        
+
     } catch (error) {
         console.error("[Hub Proxy] Error:", error);
         if (!res.headersSent) {
@@ -571,7 +579,7 @@ app.get('/api/oauth_login', async (req, res) => {
         return;
 
     }
-    
+
     res.status(500).send({ error: 'OAuth2 login failed' });
 });
 
@@ -592,7 +600,7 @@ app.get('/api/oauth_callback', async (req, res) => {
     }
 
     let tokens = await openid.authorizationCodeGrant(
-        oauthData.config,   
+        oauthData.config,
         getCurrentUrl(),
         {
             pkceCodeVerifier: oauthData.code_verifier,
@@ -602,7 +610,7 @@ app.get('/api/oauth_callback', async (req, res) => {
     fs.writeFileSync(authCodePath, tokens.access_token, 'utf-8')
 
     res.send(tokens)
-            
+
 })
 
 async function getHttpsOptions() {
@@ -611,7 +619,7 @@ async function getHttpsOptions() {
     const certPath = path.join(sslPath, 'server.crt');
 
     try {
- 
+
         await fs.access(keyPath);
         await fs.access(certPath);
 
@@ -619,7 +627,7 @@ async function getHttpsOptions() {
             fs.readFile(keyPath),
             fs.readFile(certPath)
         ]);
-       
+
         return { key, cert };
 
     } catch (error) {
@@ -631,7 +639,7 @@ async function getHttpsOptions() {
 
 async function startServer() {
     try {
-      
+
         const port = process.env.PORT || 6001;
         const httpsOptions = await getHttpsOptions();
 
