@@ -90,7 +90,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
 
     chatProcessStage.set(0)
     const abortSignal = arg.signal ?? (new AbortController()).signal
-    
+
     const stageTimings = {
         stage1Start: 0,
         stage2Start: 0,
@@ -207,7 +207,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         v.chatId = v.chatId ?? v4()
         return v
     })
-    
+
     let promptInfo: MessagePresetInfo = {}
     let initialPresetNameForPromptInfo = null
     let initialPromptTogglesForPromptInfo: {
@@ -367,10 +367,10 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                 data = "@@system\n" + data
             }
             const parts = data.split(/@@@?(user|assistant|system)\n/);
-  
+
             // Initialize empty array for the chat objects
             const chatObjects: OpenAIChat[] = [];
-            
+
             // Loop through the parts array two elements at a time
             for (let i = 1; i < parts.length; i += 2) {
               const role = parts[i] as 'user' | 'assistant' | 'system';
@@ -382,11 +382,11 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         }
 
         unformated.main.push(...formatPrompt(risuChatParser(mainp + ((DBState.db.additionalPrompt === '' || (!DBState.db.promptPreprocess)) ? '' : `\n${DBState.db.additionalPrompt}`), {chara: currentChar})))
-    
+
         if(DBState.db.jailbreakToggle){
             unformated.jailbreak.push(...formatPrompt(risuChatParser(DBState.db.jailbreak, {chara: currentChar})))
         }
-    
+
         unformated.globalNote.push(...formatPrompt(risuChatParser(currentChar.replaceGlobalNote?.replaceAll('{{original}}', DBState.db.globalNote) || DBState.db.globalNote, {chara:currentChar})))
     }
 
@@ -477,7 +477,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
             content: risuChatParser(getPersonaPrompt(), {chara: currentChar})
         })
     }
-    
+
     if(currentChar.inlayViewScreen){
         if(currentChar.viewScreen === 'emotion'){
             unformated.postEverything.push({
@@ -516,7 +516,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
     for(const lorebook of injectionLorebooks){
         injectionLorePosSet.add(lorebook.inject.location)
     }
-    
+
     for(const lorebook of postEverythingAssistantLorebooks){
         unformated.postEverything.push({
             role: lorebook.role,
@@ -527,10 +527,10 @@ export async function sendChat(chatProcessIndex = -1,arg:{
     //await tokenize currernt
     let currentTokens = DBState.db.maxResponse
     let supaMemoryCardUsed = false
-    
+
     //for unexpected error
     currentTokens += 50
-    
+
     const positionRegex = /{{position::(.+?)}}/g
     const positionParser = (text:string, loc:string) => {
         console.log(injectionLorePosSet)
@@ -649,7 +649,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                         if(currentChar.replaceGlobalNote){
                             content = positionParser(currentChar.replaceGlobalNote, posType).replaceAll('{{original}}', content)
                         }
-                        
+
                         if(currentChar.prebuiltAssetCommand && !card.text.includes('{{//@customimageinstruction}}')){
                             content += prebuiltAssetCommand
                         }
@@ -694,7 +694,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                             end = 0
                         }
                     }
-                    
+
                     if(start >= end){
                         break
                     }
@@ -725,7 +725,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
             }
         }
     }
-    
+
     const examples = exampleMessage(currentChar, getUserName())
 
     for(const example of examples){
@@ -742,7 +742,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         })
     }
 
-    
+
     let msReseted = false
     const makeMs = (currentChat:Chat) => {
         let mss:Message[] = []
@@ -780,7 +780,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         chats.push(chat)
         currentTokens += await tokenizer.tokenizeChat(chat)
     }
-    
+
     console.log('Prepared messages for token calculation:', ms)
 
     const triggerResult = await runTrigger(currentChar, 'start', {chat: currentChat})
@@ -853,7 +853,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                         })
                     }
                     else{
-                        const captionResult = await runImageEmbedding(inlayData.data) 
+                        const captionResult = await runImageEmbedding(inlayData.data)
                         formatedChat += `[${captionResult[0].generated_text}]`
                     }
                 }
@@ -924,7 +924,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     })
                 })())
             }
-            return ''          
+            return ''
         })
         await Promise.all(assetPromises)
 
@@ -956,7 +956,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         }
         currentTokens += await tokenizer.tokenizeChat(chat)
     }
-    
+
     if(nowChatroom.supaMemory && (DBState.db.supaModelType !== 'none' || DBState.db.hanuraiEnable || DBState.db.hypav2 || DBState.db.hypaV3)){
         stageTimings.stage1Duration = Date.now() - stageTimings.stage1Start
         chatProcessStage.set(2)
@@ -1008,7 +1008,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
             currentTokens = sp.currentTokens
             currentChat.hypaV3Data = sp.memory ?? currentChat.hypaV3Data
             DBState.db.characters[selectedChar].chats[selectedChat].hypaV3Data = currentChat.hypaV3Data
-    
+
             currentChat = DBState.db.characters[selectedChar].chats[selectedChat];
             console.log("[Expected to be updated] chat's HypaV3Data: ", currentChat.hypaV3Data)
         }
@@ -1107,7 +1107,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         }
     }
 
-    
+
     //make into one
 
     let formated:OpenAIChat[] = []
@@ -1185,7 +1185,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     if(card.innerFormat && pmt.length > 0){
                         for(let i=0;i<pmt.length;i++){
                             pmt[i].content = risuChatParser(positionParser(card.innerFormat,card.type), {chara: currentChar}).replace('{{slot}}', pmt[i].content)
-                            
+
                             if(DBState.db.promptInfoInsideChat && DBState.db.promptTextInfoInsideChat){
                                 pushPromptInfoBody(pmt[i].role, card.innerFormat, promptBodyformatedForChatStore)
                             }
@@ -1200,7 +1200,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     if(card.innerFormat && pmt.length > 0){
                         for(let i=0;i<pmt.length;i++){
                             pmt[i].content = risuChatParser(positionParser(card.innerFormat,card.type), {chara: currentChar}).replace('{{slot}}', pmt[i].content || card.defaultText || '')
-                            
+
                             if(DBState.db.promptInfoInsideChat && DBState.db.promptTextInfoInsideChat){
                                 pushPromptInfoBody(pmt[i].role, card.innerFormat, promptBodyformatedForChatStore)
                             }
@@ -1295,7 +1295,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                             end = 0
                         }
                     }
-                    
+
                     if(start >= end){
                         break
                     }
@@ -1475,7 +1475,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
     let result = ''
     let emoChanged = false
     let resendChat = false
-    
+
     if(abortSignal.aborted === true){
         return false
     }
@@ -1525,13 +1525,13 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                 DBState.db.characters[selectedChar].chats[selectedChat].isStreaming = false
                 DBState.db.characters[selectedChar].reloadKeys += 1
                 break
-            }   
+            }
         }
 
         addRerolls(generationId, Object.values(lastResponseChunk))
 
         DBState.db.characters[selectedChar].chats[selectedChat] = runCurrentChatFunction(DBState.db.characters[selectedChar].chats[selectedChat])
-        currentChat = DBState.db.characters[selectedChar].chats[selectedChat]        
+        currentChat = DBState.db.characters[selectedChar].chats[selectedChat]
         const triggerResult = await runTrigger(currentChar, 'output', {chat:currentChat})
         if(triggerResult && triggerResult.chat){
             currentChat = triggerResult.chat
@@ -1552,7 +1552,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         }
     }
     else{
-        const msgs = (req.type === 'success') ? [['char',req.result]] as const 
+        const msgs = (req.type === 'success') ? [['char',req.result]] as const
                     : (req.type === 'multiline') ? req.result
                     : []
         let mrerolls:string[] = []
@@ -1582,7 +1582,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     generationInfo,
                     promptInfo,
                     chatId: generationId,
-                }       
+                }
                 if(inlayResult.promise){
                     const p = await inlayResult.promise
                     DBState.db.characters[selectedChar].chats[selectedChat].message[msgIndex].data = p
@@ -1619,7 +1619,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         }
 
         DBState.db.characters[selectedChar].chats[selectedChat] = runCurrentChatFunction(DBState.db.characters[selectedChar].chats[selectedChat])
-        currentChat = DBState.db.characters[selectedChar].chats[selectedChat]        
+        currentChat = DBState.db.characters[selectedChar].chats[selectedChat]
 
         const triggerResult = await runTrigger(currentChar, 'output', {chat:currentChat})
         if(triggerResult && triggerResult.chat){
@@ -1673,26 +1673,26 @@ export async function sendChat(chatProcessIndex = -1,arg:{
 
     if(resendChat){
         stageTimings.stage4Duration = Date.now() - stageTimings.stage4Start
-        
+
         if(generationInfo.stageTiming) {
             generationInfo.stageTiming.stage1 = stageTimings.stage1Duration
             generationInfo.stageTiming.stage2 = stageTimings.stage2Duration
             generationInfo.stageTiming.stage3 = stageTimings.stage3Duration
             generationInfo.stageTiming.stage4 = stageTimings.stage4Duration
         }
-        
+
         const lastMessageIndex = DBState.db.characters[selectedChar].chats[selectedChat].message.length - 1
         if(lastMessageIndex >= 0 && DBState.db.characters[selectedChar].chats[selectedChat].message[lastMessageIndex].generationInfo) {
             DBState.db.characters[selectedChar].chats[selectedChat].message[lastMessageIndex].generationInfo = generationInfo
         }
-        
+
         doingChat.set(false)
         return await sendChat(chatProcessIndex, {
             signal: abortSignal
         })
     }
 
-    if(DBState.db.notification){
+    if(DBState.db.notification && document.visibilityState !== 'visible'){
         try {
             const permission = await Notification.requestPermission()
             if(permission === 'granted'){
@@ -1704,7 +1704,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                 }
             }
         } catch (error) {
-            
+
         }
     }
 
@@ -1793,7 +1793,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     }
                 }
 
-                
+
 
                 return true
             }
@@ -1827,7 +1827,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                         emobias[token] = -100
                     }
                 }
-            }        
+            }
 
             const promptbody:OpenAIChat[] = [
                 {
@@ -1911,7 +1911,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     return true
                 }
             }
-            
+
             return true
 
 
@@ -1939,14 +1939,14 @@ export async function sendChat(chatProcessIndex = -1,arg:{
     }
 
     stageTimings.stage4Duration = Date.now() - stageTimings.stage4Start
-    
+
     if(generationInfo.stageTiming) {
         generationInfo.stageTiming.stage1 = stageTimings.stage1Duration
         generationInfo.stageTiming.stage2 = stageTimings.stage2Duration
         generationInfo.stageTiming.stage3 = stageTimings.stage3Duration
         generationInfo.stageTiming.stage4 = stageTimings.stage4Duration
     }
-    
+
     const lastMessageIndex = DBState.db.characters[selectedChar].chats[selectedChat].message.length - 1
     if(lastMessageIndex >= 0 && DBState.db.characters[selectedChar].chats[selectedChat].message[lastMessageIndex].generationInfo) {
         DBState.db.characters[selectedChar].chats[selectedChat].message[lastMessageIndex].generationInfo = generationInfo
