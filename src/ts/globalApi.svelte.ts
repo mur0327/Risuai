@@ -24,7 +24,7 @@ import { hasher } from "./parser.svelte";
 import { characterURLImport, hubURL } from "./characterCards";
 import { defaultJailbreak, defaultMainPrompt, oldJailbreak, oldMainPrompt } from "./storage/defaultPrompts";
 import { loadRisuAccountData } from "./drive/accounter";
-import { decodeRisuSave, encodeRisuSaveLegacy, RisuSaveEncoder, type toSaveType } from "./storage/risuSave";
+import { decodeRisuSave, encodeRisuSaveLegacy, RisuSaveEncoder, type RisuSaveEncodeProgress, type RisuSaveSetProgress, type toSaveType } from "./storage/risuSave";
 import { AutoStorage } from "./storage/autoStorage";
 import { updateAnimationSpeed } from "./gui/animation";
 import { updateColorScheme, updateTextThemeAndCSS } from "./gui/colorscheme";
@@ -273,9 +273,90 @@ export async function loadAsset(id: string) {
 }
 
 let lastSave = ''
+type SavingStage =
+    | 'idle'
+    | 'prepare'
+    | 'encode-set'
+    | 'encode-pack'
+    | 'write-main'
+    | 'write-backup'
+    | 'account-delay'
+    | 'cleanup'
+    | 'sync'
+    | 'error'
+
+type SavingProgressContext = {
+    startedAt: number
+    smoothedEta: number
+}
+
 export let saving = $state({
-    state: false
+    state: false,
+    percent: 0,
+    etaSeconds: -1,
+    stage: 'idle' as SavingStage,
+    startedAt: 0,
+    updatedAt: 0
 })
+
+function clampSavingPercent(percent: number) {
+    return Math.max(0, Math.min(100, percent))
+}
+
+function createSavingProgressContext(): SavingProgressContext {
+    return {
+        startedAt: Date.now(),
+        smoothedEta: -1
+    }
+}
+
+function setSavingProgress(percent: number, stage: SavingStage, context: SavingProgressContext) {
+    const now = Date.now()
+    const clamped = clampSavingPercent(percent)
+    const nextPercent = clamped < saving.percent ? saving.percent : clamped
+    const elapsedSeconds = Math.max(0, (now - context.startedAt) / 1000)
+    let etaSeconds = -1
+
+    if (nextPercent > 1 && nextPercent < 100) {
+        const progress = nextPercent / 100
+        const instantEta = elapsedSeconds * ((1 - progress) / progress)
+        if (Number.isFinite(instantEta) && instantEta >= 0) {
+            context.smoothedEta = context.smoothedEta < 0
+                ? instantEta
+                : context.smoothedEta * 0.7 + instantEta * 0.3
+            etaSeconds = Math.max(0, Math.ceil(context.smoothedEta))
+        }
+    }
+    else if (nextPercent >= 100) {
+        etaSeconds = 0
+    }
+
+    saving.state = true
+    saving.percent = nextPercent
+    saving.etaSeconds = etaSeconds
+    saving.stage = stage
+    saving.updatedAt = now
+}
+
+function startSavingProgress(context: SavingProgressContext) {
+    const now = Date.now()
+    context.startedAt = now
+    context.smoothedEta = -1
+    saving.state = true
+    saving.percent = 0
+    saving.etaSeconds = -1
+    saving.stage = 'prepare'
+    saving.startedAt = now
+    saving.updatedAt = now
+}
+
+function finishSavingProgress() {
+    saving.state = false
+    saving.percent = 0
+    saving.etaSeconds = -1
+    saving.stage = 'idle'
+    saving.updatedAt = Date.now()
+}
 
 /**
  * Saves the current state of the database.
@@ -379,7 +460,6 @@ export async function saveDb() {
     })
 
     let savetrys = 0
-    let lastDbData = new Uint8Array(0)
     await sleep(1000)
     while (true) {
         if (!changed) {
@@ -387,10 +467,12 @@ export async function saveDb() {
             continue
         }
 
-        saving.state = true
         changed = false
+        const progressContext = createSavingProgressContext()
+        startSavingProgress(progressContext)
         try {
 
+            setSavingProgress(3, 'prepare', progressContext)
             if (requiresFullEncoderReload.state) {
                 encoder = new RisuSaveEncoder()
                 await encoder.init(getDatabase(), {
@@ -405,6 +487,7 @@ export async function saveDb() {
             changeTracker.chat = changeTracker.chat.length === 0 ? [] : [changeTracker.chat[0]]
             changeTracker.botPreset = false
             changeTracker.modules = false
+            setSavingProgress(5, 'prepare', progressContext)
             if (gotChannel) {
                 //Data is saved in other tab
                 await sleep(1000)
@@ -419,34 +502,52 @@ export async function saveDb() {
                 continue
             }
 
-            await encoder.set(db, toSave)
-            const encoded = encoder.encode()
+            await encoder.set(db, toSave, (progress: RisuSaveSetProgress) => {
+                const ratio = progress.total > 0 ? (progress.completed / progress.total) : 1
+                setSavingProgress(5 + ratio * 65, 'encode-set', progressContext)
+            })
+            const encoded = encoder.encode({}, (progress: RisuSaveEncodeProgress) => {
+                const ratio = progress.totalBytes > 0 ? (progress.copiedBytes / progress.totalBytes) : 1
+                setSavingProgress(70 + ratio * 12, 'encode-pack', progressContext)
+            })
             if (!encoded) {
                 await sleep(1000)
                 continue
             }
             const dbData = new Uint8Array(encoded)
+            setSavingProgress(82, 'write-main', progressContext)
             if (isTauri) {
                 await writeFile('database/database.bin', dbData, { baseDir: BaseDirectory.AppData });
+                setSavingProgress(90, 'write-main', progressContext)
                 await writeFile(`database/dbbackup-${(Date.now() / 100).toFixed()}.bin`, dbData, { baseDir: BaseDirectory.AppData });
+                setSavingProgress(96, 'write-backup', progressContext)
             }
             else {
 
                 await forageStorage.setItem('database/database.bin', dbData)
+                setSavingProgress(90, 'write-main', progressContext)
                 if (!forageStorage.isAccount) {
                     await forageStorage.setItem(`database/dbbackup-${(Date.now() / 100).toFixed()}.bin`, dbData)
+                    setSavingProgress(96, 'write-backup', progressContext)
                 }
                 if (forageStorage.isAccount) {
+                    setSavingProgress(90, 'account-delay', progressContext)
                     await sleep(3000)
+                    setSavingProgress(96, 'account-delay', progressContext)
                 }
             }
             if (!forageStorage.isAccount) {
+                setSavingProgress(96, 'cleanup', progressContext)
                 await getDbBackups()
+                setSavingProgress(98, 'cleanup', progressContext)
             }
             savetrys = 0
+            setSavingProgress(98, 'sync', progressContext)
             await saveDbKei()
+            setSavingProgress(100, 'sync', progressContext)
             await sleep(500)
         } catch (error) {
+            setSavingProgress(saving.percent, 'error', progressContext)
             savetrys += 1
             if (savetrys > 4) {
                 alertError(error)
@@ -455,8 +556,9 @@ export async function saveDb() {
                 console.error(error)
             }
         }
-
-        saving.state = false
+        finally {
+            finishSavingProgress()
+        }
     }
 }
 

@@ -87,6 +87,23 @@ export type toSaveType = {
     modules: boolean;
 }
 
+export type RisuSaveSetProgress = {
+    completed: number;
+    total: number;
+    name: string;
+    kind: 'character' | 'preset' | 'modules' | 'root';
+}
+
+type RisuSaveSetProgressCallback = (progress: RisuSaveSetProgress) => void
+
+export type RisuSaveEncodeProgress = {
+    copiedBytes: number;
+    totalBytes: number;
+    name: string;
+}
+
+type RisuSaveEncodeProgressCallback = (progress: RisuSaveEncodeProgress) => void
+
 enum RisuSaveType {
     CONFIG = 0,
     ROOT = 1,
@@ -175,13 +192,31 @@ export class RisuSaveEncoder {
         })
     }
 
-    async set(data:Database, toSave:toSaveType){
+    async set(data:Database, toSave:toSaveType, onProgress?: RisuSaveSetProgressCallback){
         let obj:Record<any,any> = {}
         let keys = Object.keys(data)
         for(const key of keys){
             if(key !== 'characters' && key !== 'botPresets'){
                 obj[key] = data[key]
             }
+        }
+
+        const characterWriteCount = data.characters.reduce((count, character) => {
+            if(toSave.character.includes(character.chaId) || !this.blocks[character.chaId]){
+                return count + 1;
+            }
+            return count;
+        }, 0);
+        const totalWrites = characterWriteCount + (toSave.botPreset ? 1 : 0) + (toSave.modules ? 1 : 0) + 1;
+        let completedWrites = 0;
+        const emitProgress = (name: string, kind: RisuSaveSetProgress['kind']) => {
+            completedWrites += 1;
+            onProgress?.({
+                completed: completedWrites,
+                total: totalWrites,
+                name,
+                kind
+            });
         }
 
         const savedId = new Set<string>();
@@ -196,6 +231,7 @@ export class RisuSaveEncoder {
                 }, {
                     remote: 'prefer'
                 });
+                emitProgress(character.chaId, 'character')
                 savedId.add(character.chaId);
                 toSave.character.splice(index, 1);
             }
@@ -208,6 +244,7 @@ export class RisuSaveEncoder {
                 }, {
                     remote: 'prefer'
                 });
+                emitProgress(character.chaId, 'character')
                 savedId.add(character.chaId);
             }
         }
@@ -228,6 +265,7 @@ export class RisuSaveEncoder {
                 type: RisuSaveType.BOTPRESET,
                 name: 'preset'
             });
+            emitProgress('preset', 'preset')
         }
         if(toSave.modules){
             this.blocks['modules'] = await this.encodeBlock({
@@ -236,6 +274,7 @@ export class RisuSaveEncoder {
                 type: RisuSaveType.MODULES,
                 name: 'modules'
             });
+            emitProgress('modules', 'modules')
         }
 
         obj["__directory"] = Object.keys(this.blocks).filter(key => key !== 'root');
@@ -245,17 +284,21 @@ export class RisuSaveEncoder {
             type: RisuSaveType.ROOT,
             name: 'root'
         });
+        emitProgress('root', 'root')
     }
 
     encode(arg:{
         compression?: boolean
-    } = {}){
+    } = {}, onProgress?: RisuSaveEncodeProgressCallback){
         if(!this.blocks['config']){
             return null
         }
+        const keys = Object.keys(this.blocks);
         let totalLength = 0
-        for(const key in this.blocks){
+        let totalBytes = 0
+        for(const key of keys){
             totalLength += this.blocks[key].length;
+            totalBytes += this.blocks[key].length;
         }
         totalLength += magicRisuSaveHeader.length;
         const arrayBuf = new ArrayBuffer(totalLength);
@@ -263,9 +306,17 @@ export class RisuSaveEncoder {
         let offset = 0;
         view.set(magicRisuSaveHeader, offset);
         offset += magicRisuSaveHeader.length;
-        for(const key in this.blocks){
-            view.set(this.blocks[key], offset);
-            offset += this.blocks[key].length;
+        let copiedBytes = 0
+        for(const key of keys){
+            const block = this.blocks[key];
+            view.set(block, offset);
+            offset += block.length;
+            copiedBytes += block.length;
+            onProgress?.({
+                copiedBytes,
+                totalBytes,
+                name: key
+            })
         }
         console.log(Object.keys(this.blocks).length, 'blocks encoded');
         return arrayBuf;
