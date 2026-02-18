@@ -317,14 +317,16 @@ function setSavingProgress(percent: number, stage: SavingStage, context: SavingP
     const elapsedSeconds = Math.max(0, (now - context.startedAt) / 1000)
     let etaSeconds = -1
 
-    if (nextPercent > 1 && nextPercent < 100) {
+    // Hide unstable ETA during the very early phase.
+    if (nextPercent >= 10 && nextPercent < 100) {
         const progress = nextPercent / 100
         const instantEta = elapsedSeconds * ((1 - progress) / progress)
         if (Number.isFinite(instantEta) && instantEta >= 0) {
             context.smoothedEta = context.smoothedEta < 0
                 ? instantEta
                 : context.smoothedEta * 0.7 + instantEta * 0.3
-            etaSeconds = Math.max(0, Math.ceil(context.smoothedEta))
+            const roundedEta = Math.ceil(context.smoothedEta)
+            etaSeconds = roundedEta > 0 ? roundedEta : -1
         }
     }
     else if (nextPercent >= 100) {

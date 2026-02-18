@@ -16,7 +16,10 @@
     if (!Number.isFinite(etaSeconds) || etaSeconds < 0) {
       return "--";
     }
-    const total = Math.max(0, Math.round(etaSeconds));
+    const total = Math.round(Math.max(0, etaSeconds));
+    if (total <= 0) {
+      return "--";
+    }
     if (total < 60) {
       return `~${total}s`;
     }
@@ -31,7 +34,7 @@
 
 {#if DBState?.db?.showSavingIcon && saving.state}
   <div
-    class="absolute top-3 right-3 z-10 text-white p-2 rounded-sm bg-linear-to-br from-blue-500 to-purple-800 saving-animation pointer-events-none min-w-30"
+    class="absolute top-3 right-3 z-10 text-white p-2 rounded-sm bg-darkbg/90 border border-darkborderc shadow-lg pointer-events-none min-w-30"
   >
     <div class="flex items-center gap-2">
       <SaveIcon size={16} />
@@ -44,7 +47,7 @@
     </div>
     <div class="mt-1.5 h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
       <div
-        class="h-full bg-white transition-[width] duration-200"
+        class="h-full bg-blue-400 transition-[width] duration-200"
         style:width={`${clampPercent(saving.percent)}%`}
       ></div>
     </div>
