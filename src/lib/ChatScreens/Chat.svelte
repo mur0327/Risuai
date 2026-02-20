@@ -113,8 +113,11 @@
 
     async function toggleEditMode(enterEdit: boolean) {
         const sc = document.querySelector('.default-chat-screen') as HTMLElement | null;
-        const chatEl = sc?.querySelector(`[data-chat-index="${idx}"]`) as HTMLElement | null;
-        const topBefore = chatEl?.getBoundingClientRect().top;
+
+        // Capture distance from bottom before layout change
+        const distFromBottom = sc
+            ? sc.scrollHeight - sc.scrollTop - sc.clientHeight
+            : 0;
 
         if (enterEdit) {
             editMode = true;
@@ -123,27 +126,12 @@
             edit();
         }
 
-        // Only adjust scroll when entering editMode (textarea appears).
-        // When saving (exiting), Chats.svelte's anchor-based $effect handles it;
-        // adjusting here too would cause a double-correction race.
-        if (!enterEdit) return;
-
         await tick();
 
-        const adjustScroll = () => {
-            if (sc != null && topBefore != null) {
-                const el = sc.querySelector(`[data-chat-index="${idx}"]`) as HTMLElement | null;
-                if (el) {
-                    const topAfter = el.getBoundingClientRect().top;
-                    if (Math.abs(topAfter - topBefore) > 1) {
-                        sc.scrollTop += topAfter - topBefore;
-                    }
-                }
-            }
-        };
-
-        adjustScroll();
-        requestAnimationFrame(adjustScroll);
+        // Restore same distance from bottom after textarea appears/disappears
+        if (sc) {
+            sc.scrollTop = sc.scrollHeight - sc.clientHeight - distFromBottom;
+        }
     }
 
     function handlePartialEditSave(e: CustomEvent<{ newData: string }>) {

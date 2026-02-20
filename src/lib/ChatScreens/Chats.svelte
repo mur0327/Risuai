@@ -168,61 +168,28 @@
 
     $effect(() => {
         console.log('Updating Chats');
-        void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
+        void $ReloadChatPointer;
         const wasAtBottom = checkIfAtBottom();
-
-        // Anchor-based scroll preservation for in-place edits AND deletions
         const scrollContainer = chatBody?.parentElement;
-        let anchorIndex: string | null = null;
-        let anchorMeasure: number | null = null;
-        let anchorUseBottom = false;
-        const shouldPreserveScroll = previousLength > 0 && messages.length <= previousLength;
-        if (shouldPreserveScroll && scrollContainer) {
-            // Find a visible chat element to use as scroll anchor.
-            // In flex-col-reverse layout, DOM order is bottom -> top, so we pick the visual top-most visible item.
-            const chatEls = Array.from(chatBody.querySelectorAll<HTMLElement>('[data-chat-index]'));
-            const scRect = scrollContainer.getBoundingClientRect();
-            const visible = chatEls
-                .map((el) => ({
-                    el,
-                    rect: el.getBoundingClientRect(),
-                    idx: Number(el.getAttribute('data-chat-index') ?? NaN)
-                }))
-                .filter(({ rect }) => rect.top < scRect.bottom && rect.bottom > scRect.top)
-                .sort((a, b) => a.rect.top - b.rect.top);
 
-            if (visible.length > 0) {
-                const latestIdx = messages.length - 1;
-                // Prefer non-latest anchor to avoid bottom jump when the latest message height changes.
-                const selected = visible.find((v) => v.idx !== latestIdx) ?? visible[0];
-                const selectedIndex = selected.el.getAttribute('data-chat-index');
-                if (selectedIndex != null) {
-                    anchorIndex = selectedIndex;
-                    anchorUseBottom = selected.idx === latestIdx;
-                    anchorMeasure = anchorUseBottom ? selected.rect.bottom : selected.rect.top;
-                }
-            }
-        }
+        // Scroll preservation: capture distance from bottom before DOM changes.
+        // In flex-col-reverse, anchoring to "distance from bottom" is stable
+        // regardless of index shifts, element remounts, or height changes.
+        const shouldPreserveScroll = scrollContainer && previousLength > 0 && messages.length <= previousLength;
+        const distFromBottom = shouldPreserveScroll
+            ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight
+            : 0;
 
-        updateChatBody()
+        updateChatBody();
 
-        // Restore scroll by re-anchoring to the same element
-        if (anchorIndex !== null && anchorMeasure !== null && scrollContainer) {
-            const newAnchor = chatBody.querySelector<HTMLElement>(`[data-chat-index="${anchorIndex}"]`);
-            if (newAnchor) {
-                const rect = newAnchor.getBoundingClientRect();
-                const newMeasure = anchorUseBottom ? rect.bottom : rect.top;
-                const drift = newMeasure - anchorMeasure;
-                if (Math.abs(drift) > 1) {
-                    scrollContainer.scrollTop += drift;
-                }
-            }
+        // Restore: keep the same distance from bottom
+        if (shouldPreserveScroll) {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight - distFromBottom;
         }
 
         const currentChatRoomId = getCurrentChatRoomId();
         const isSameChat = currentChatRoomId === previousChatRoomId;
 
-        // Only auto-scroll if it's the same chat and new messages were added
         if(isSameChat && messages.length > previousLength){
             const lastMsg = messages[messages.length - 1];
             if(lastMsg && lastMsg.role === 'char' && DBState.db.autoScrollToNewMessage){
