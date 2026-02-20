@@ -11,7 +11,7 @@
     import { DBState, ReloadChatPointer, CurrentTriggerIdStore, popupStore } from 'src/ts/stores.svelte'
     import { ConnectionOpenStore } from "src/ts/sync/multiuser"
     import { capitalize, getUserIcon, getUserName, sleep } from "src/ts/util"
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy, onMount, tick } from "svelte"
     import { type Unsubscriber } from "svelte/store"
     import { v4 as uuidv4, v4 } from 'uuid'
     import { language } from "../../lang"
@@ -111,6 +111,36 @@
         DBState.db.characters[selIdState.selId].chats[DBState.db.characters[selIdState.selId].chatPage].message[idx].data = message
     }
 
+    async function toggleEditMode(enterEdit: boolean) {
+        const sc = document.querySelector('.default-chat-screen') as HTMLElement | null;
+        const chatEl = sc?.querySelector(`[data-chat-index="${idx}"]`) as HTMLElement | null;
+        const topBefore = chatEl?.getBoundingClientRect().top;
+
+        if (enterEdit) {
+            editMode = true;
+        } else {
+            editMode = false;
+            edit();
+        }
+
+        await tick();
+
+        const adjustScroll = () => {
+            if (sc != null && topBefore != null) {
+                const el = sc.querySelector(`[data-chat-index="${idx}"]`) as HTMLElement | null;
+                if (el) {
+                    const topAfter = el.getBoundingClientRect().top;
+                    if (Math.abs(topAfter - topBefore) > 1) {
+                        sc.scrollTop += topAfter - topBefore;
+                    }
+                }
+            }
+        };
+
+        adjustScroll();
+        requestAnimationFrame(adjustScroll);
+    }
+
     function handlePartialEditSave(e: CustomEvent<{ newData: string }>) {
         if (idx >= 0) {
             message = e.detail.newData
@@ -170,7 +200,7 @@
         try {
             const parser = new DOMParser()
             const doc = parser.parseFromString(risuChatParser(html ?? '', {cbsConditions: getCbsCondition()}), 'text/html')
-            return doc.body   
+            return doc.body
         } catch (error) {
             const placeholder = document.createElement('div')
             return placeholder
@@ -211,7 +241,7 @@
                 return v
             })
         }
-        
+
         if(triggerName && triggerId) {
             setTimeout(() => {
                 CurrentTriggerIdStore.set(null)
@@ -227,7 +257,7 @@
 
     async function toggleBookmark() {
         const chat = DBState.db.characters[selIdState.selId].chats[DBState.db.characters[selIdState.selId].chatPage];
-        
+
         if(!chat.message[idx]) return;
 
         let messageId = chat.message[idx]?.chatId;
@@ -282,9 +312,9 @@
     <div class="flex flex-col items-end">
         {#if messageGenerationInfo && (DBState.db.requestInfoInsideChat || aiLawApplies())}
             <button class="text-sm p-1 text-textcolor2 border-darkborderc float-end mr-2 my-1
-                    hover:ring-darkbutton hover:ring-3 rounded-md hover:text-textcolor transition-all flex justify-center items-center" 
+                    hover:ring-darkbutton hover:ring-3 rounded-md hover:text-textcolor transition-all flex justify-center items-center"
                     onclick={() => {
-                        const currentGenerationInfo = idx >= 0 ? 
+                        const currentGenerationInfo = idx >= 0 ?
                             DBState.db.characters[$selectedCharID].chats[DBState.db.characters[$selectedCharID].chatPage].message[idx].generationInfo :
                             messageGenerationInfo
 
@@ -302,7 +332,7 @@
         {/if}
         {#if DBState.db.translatorType === 'llm' && translated}
             <button class="text-sm p-1 text-textcolor2 border-darkborderc float-end mr-2 my-1
-                            hover:ring-darkbutton hover:ring-3 rounded-md hover:text-textcolor transition-all flex justify-center items-center" 
+                            hover:ring-darkbutton hover:ring-3 rounded-md hover:text-textcolor transition-all flex justify-center items-center"
                     onclick={() => {
                         retranslate = true
                     }}
@@ -319,7 +349,7 @@
 {#snippet textBox()}
     {#if editMode}
         <AutoresizeArea bind:value={message} handleLongPress={() => {
-            editMode = false
+            toggleEditMode(false)
         }} />
     {:else if isComment}
         <div class="w-full flex justify-center text-textcolor2 italic mb-12">
@@ -358,7 +388,7 @@
             bind:this={bodyRoot}
             onclick={() => {
             if(DBState.db.clickToEdit && idx > -1){
-                editMode = true
+                toggleEditMode(true)
             }
         }}
             style:font-size="{0.875 * (DBState.db.zoomsize / 100)}rem"
@@ -447,7 +477,7 @@
                 const doc = parser.parseFromString(
                     await ParseMarkdown(msgDisplay, getCurrentCharacter(), 'normal', idx, getCbsCondition())
                 , 'text/html')
-                
+
                 doc.querySelectorAll('mark').forEach((el) => {
                     const d = el.getAttribute('risu-mark')
                     if(d === 'quote1' || d === 'quote2'){
@@ -475,12 +505,12 @@
                 doc.querySelectorAll('strong em').forEach((el) => {
                     el.setAttribute('style', `font-weight: bold; font-style: italic; color: ${root.style.getPropertyValue('--FontColorItalicBold')};`)
                 })
-                
+
                 const imgs = doc.querySelectorAll('img')
                 for(const img of imgs){
                     img.setAttribute('alt', 'from Risuai')
                     const url = img.getAttribute('src')
-                    
+
                     img.setAttribute('style', `
                         max-width: 100%;
                         margin: 10px 0;
@@ -490,14 +520,14 @@
                         margin-left: auto;
                         margin-right: auto;
                     `)
-                    
+
                     if(url && (url.startsWith('http://asset.localhost') || url.startsWith('https://asset.localhost') || url.startsWith('https://sv.risuai') || url.startsWith('data:') || url.startsWith('http') || url.startsWith('/'))){
                         try {
                             let fetchUrl = url
                             if(url.startsWith('/')) {
                                 fetchUrl = window.location.origin + url
                             }
-                            
+
                             const data = await fetch(fetchUrl)
                             if (data.ok) {
                                 const canvas = document.createElement('canvas')
@@ -527,10 +557,10 @@
 
                 let iconDataUrl = ''
                 let hasValidImage = false
-                
+
                 try {
                     const iconImage = (await getFileSrc(DBState.db.characters[selIdState.selId].image ?? '')) ?? ''
-                    
+
                     if(iconImage && (iconImage.startsWith('http://asset.localhost') || iconImage.startsWith('https://asset.localhost') || iconImage.startsWith('https://sv.risuai') || iconImage.startsWith('data:') || iconImage.startsWith('http') || iconImage.startsWith('/'))){
                         if(iconImage.startsWith('data:')){
                             iconDataUrl = iconImage
@@ -573,10 +603,10 @@
                 const isUserMessage = role === 'user'
                 const displayName = isUserMessage ? getUserName() : name
                 const modelInfo = messageGenerationInfo ? capitalize(getModelInfo(messageGenerationInfo.model).shortName) : (isUserMessage ? 'User' : 'AI')
-                
+
                 let finalIconDataUrl = iconDataUrl
                 let finalHasValidImage = hasValidImage
-                
+
                 if (isUserMessage) {
                     finalHasValidImage = false
                     const userIcon = getUserIcon()
@@ -623,7 +653,7 @@
                         }
                     }
                 }
-                
+
                 const html = `<div style="font-family: 'Segoe UI', Roboto, Arial, sans-serif; color: ${root.style.getPropertyValue('--risu-theme-textcolor')}; line-height: 1.6; max-width: 600px; margin: 1rem auto; background: ${root.style.getPropertyValue('--risu-theme-bgcolor')}; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15); overflow: hidden;">
 <div style="padding: 20px;">
 <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem; text-align: center;">
@@ -664,7 +694,7 @@
         {#if showNames}
             <span class="ml-1">{language.copy}</span>
         {/if}
-    </button>    
+    </button>
 {/if}
 {#if idx > -1}
     {#if DBState.db.characters[selIdState.selId].type !== 'group' && DBState.db.characters[selIdState.selId].ttsMode !== 'none' && (DBState.db.characters[selIdState.selId].ttsMode)}
@@ -702,13 +732,7 @@
     {/if}
     {#if idx > -1}
         <button class={"flex items-center hover:text-blue-500 transition-colors button-icon-edit "+(editMode?'text-blue-400':'')} onclick={() => {
-            if(!editMode){
-                editMode = true
-            }
-            else{
-                editMode = false
-                edit()
-            }
+            toggleEditMode(!editMode)
         }}>
             <PencilIcon size={20}/>
 
@@ -740,7 +764,7 @@
 {/snippet}
 
 {#snippet minorIconButtonsBody(showNames:boolean)}
-    
+
     {#if DBState.db.enableBookmark}
         <button class="flex items-center hover:text-blue-500 transition-colors button-icon-bookmark {isBookmarked ? 'text-yellow-400' : ''}" onclick={async () => {
             await sleep(1)
@@ -756,7 +780,7 @@
     <button class="flex items-center hover:text-blue-500 transition-colors" onclick={async () => {
         await sleep(1)
         const currentChat = DBState.db.characters[selIdState.selId].chats[DBState.db.characters[selIdState.selId].chatPage]
-        
+
         if(DBState.db.createFolderOnBranch && !currentChat.folderId){
             const folderId = v4()
             DBState.db.characters[selIdState.selId].chatFolders.unshift({
@@ -766,7 +790,7 @@
             })
             currentChat.folderId = folderId
         }
-        
+
         const currentMessage = currentChat.message[idx]
         const newChat = $state.snapshot(currentChat)
         newChat.name = createChatCopyName(newChat.name, 'Branch')
@@ -967,7 +991,7 @@
         </div>
     {/if}
 
-    
+
 {/snippet}
 
 {#snippet renderChilds(dom:HTMLElement)}
