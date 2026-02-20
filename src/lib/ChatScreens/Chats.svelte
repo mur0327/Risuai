@@ -6,7 +6,7 @@
     import { createSimpleCharacter, DBState, selectedCharID, ReloadChatPointer } from 'src/ts/stores.svelte';
     import { chatFoldedStateMessageIndex } from 'src/ts/globalApi.svelte';
     import { get } from 'svelte/store';
-    
+
     const getCurrentChatRoomId = () => {
         const charId = get(selectedCharID);
         if (charId < 0) return null;
@@ -114,7 +114,7 @@
                 }
             }
             nextHash = currentHash;
-            
+
         }
 
         //@ts-expect-error Set<T> requires type arg, and Set.difference needs 'esnext' lib (polyfilled by Core-js)
@@ -132,7 +132,7 @@
         });
 
         hashes = currentHashes;
-        
+
     };
 
     onDestroy(() => {
@@ -170,11 +170,22 @@
         console.log('Updating Chats');
         void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
         const wasAtBottom = checkIfAtBottom();
+
+        // Save scroll position before DOM update for in-place edits (partial edit, toggle, etc.)
+        const scrollContainer = chatBody?.parentElement;
+        const isInPlaceEdit = messages.length === previousLength && previousLength > 0;
+        const savedScrollTop = (isInPlaceEdit && scrollContainer) ? scrollContainer.scrollTop : null;
+
         updateChatBody()
-        
+
+        // Restore scroll position after in-place edit to prevent scroll jumping
+        if (savedScrollTop !== null && scrollContainer) {
+            scrollContainer.scrollTop = savedScrollTop;
+        }
+
         const currentChatRoomId = getCurrentChatRoomId();
         const isSameChat = currentChatRoomId === previousChatRoomId;
-        
+
         // Only auto-scroll if it's the same chat and new messages were added
         if(isSameChat && messages.length > previousLength){
             const lastMsg = messages[messages.length - 1];
