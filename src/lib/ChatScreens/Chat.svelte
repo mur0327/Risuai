@@ -123,6 +123,11 @@
             edit();
         }
 
+        // Only adjust scroll when entering editMode (textarea appears).
+        // When saving (exiting), Chats.svelte's anchor-based $effect handles it;
+        // adjusting here too would cause a double-correction race.
+        if (!enterEdit) return;
+
         await tick();
 
         const adjustScroll = () => {
