@@ -167,16 +167,15 @@
     let previousChatRoomId: string | null = null;
 
     $effect(() => {
-        console.log('Updating Chats');
         void $ReloadChatPointer;
         const wasAtBottom = checkIfAtBottom();
         const scrollContainer = chatBody?.parentElement;
 
-        // Scroll preservation on edit/delete: in flex-col-reverse, content above
-        // the changed element (older messages) keeps its position, so restoring
-        // the same scrollTop keeps the viewport stable.
+        // Preserve scroll position on partial edit/delete.
+        // overflow-anchor:none on the scroll container prevents browser interference,
+        // so restoring the same scrollTop keeps the viewport stable.
         const shouldPreserveScroll = scrollContainer && previousLength > 0 && messages.length <= previousLength;
-        const scrollTopBefore = shouldPreserveScroll ? scrollContainer.scrollTop : 0;
+        const scrollTopBefore = scrollContainer?.scrollTop ?? 0;
 
         updateChatBody();
 

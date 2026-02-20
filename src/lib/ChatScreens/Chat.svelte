@@ -115,6 +115,7 @@
         const sc = document.querySelector('.default-chat-screen') as HTMLElement | null;
 
         const scrollTopBefore = sc?.scrollTop ?? 0;
+        const scrollHeightBefore = sc?.scrollHeight ?? 0;
 
         if (enterEdit) {
             editMode = true;
@@ -125,9 +126,16 @@
 
         await tick();
 
-        if (sc) {
-            sc.scrollTop = scrollTopBefore;
-        }
+        // Compensate: keep same distance-from-top despite scrollHeight changes.
+        // In flex-col-reverse, scrollTop is negative. The invariant is:
+        //   distFromTop = scrollHeight + scrollTop (constant)
+        // So: newScrollTop = scrollTopBefore + scrollHeightBefore - newScrollHeight
+        const restore = () => {
+            if (sc) sc.scrollTop = scrollTopBefore + scrollHeightBefore - sc.scrollHeight;
+        };
+
+        restore();
+        requestAnimationFrame(restore);
     }
 
     function handlePartialEditSave(e: CustomEvent<{ newData: string }>) {
