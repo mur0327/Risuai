@@ -272,7 +272,6 @@ export async function loadAsset(id: string) {
     }
 }
 
-let lastSave = ''
 type SavingStage =
     | 'idle'
     | 'prepare'
@@ -287,13 +286,11 @@ type SavingStage =
 
 type SavingProgressContext = {
     startedAt: number
-    smoothedEta: number
 }
 
 export let saving = $state({
     state: false,
     percent: 0,
-    etaSeconds: -1,
     stage: 'idle' as SavingStage,
     startedAt: 0,
     updatedAt: 0
@@ -305,37 +302,17 @@ function clampSavingPercent(percent: number) {
 
 function createSavingProgressContext(): SavingProgressContext {
     return {
-        startedAt: Date.now(),
-        smoothedEta: -1
+        startedAt: Date.now()
     }
 }
 
-function setSavingProgress(percent: number, stage: SavingStage, context: SavingProgressContext) {
+function setSavingProgress(percent: number, stage: SavingStage, _context: SavingProgressContext) {
     const now = Date.now()
     const clamped = clampSavingPercent(percent)
     const nextPercent = clamped < saving.percent ? saving.percent : clamped
-    const elapsedSeconds = Math.max(0, (now - context.startedAt) / 1000)
-    let etaSeconds = -1
-
-    // Hide unstable ETA during the very early phase.
-    if (nextPercent >= 10 && nextPercent < 100) {
-        const progress = nextPercent / 100
-        const instantEta = elapsedSeconds * ((1 - progress) / progress)
-        if (Number.isFinite(instantEta) && instantEta >= 0) {
-            context.smoothedEta = context.smoothedEta < 0
-                ? instantEta
-                : context.smoothedEta * 0.7 + instantEta * 0.3
-            const roundedEta = Math.ceil(context.smoothedEta)
-            etaSeconds = roundedEta > 0 ? roundedEta : -1
-        }
-    }
-    else if (nextPercent >= 100) {
-        etaSeconds = 0
-    }
 
     saving.state = true
     saving.percent = nextPercent
-    saving.etaSeconds = etaSeconds
     saving.stage = stage
     saving.updatedAt = now
 }
@@ -343,19 +320,16 @@ function setSavingProgress(percent: number, stage: SavingStage, context: SavingP
 function startSavingProgress(context: SavingProgressContext) {
     const now = Date.now()
     context.startedAt = now
-    context.smoothedEta = -1
     saving.state = true
     saving.percent = 0
-    saving.etaSeconds = -1
     saving.stage = 'prepare'
     saving.startedAt = now
     saving.updatedAt = now
 }
 
-function finishSavingProgress() {
+function finishSavingProgress(_context: SavingProgressContext) {
     saving.state = false
     saving.percent = 0
-    saving.etaSeconds = -1
     saving.stage = 'idle'
     saving.updatedAt = Date.now()
 }
@@ -559,7 +533,7 @@ export async function saveDb() {
             }
         }
         finally {
-            finishSavingProgress()
+            finishSavingProgress(progressContext)
         }
     }
 }

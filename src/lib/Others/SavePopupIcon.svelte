@@ -11,25 +11,6 @@
     }
     return Math.max(0, Math.min(100, value));
   };
-
-  const formatEta = (etaSeconds: number) => {
-    if (!Number.isFinite(etaSeconds) || etaSeconds < 0) {
-      return "--";
-    }
-    const total = Math.round(Math.max(0, etaSeconds));
-    if (total <= 0) {
-      return "--";
-    }
-    if (total < 60) {
-      return `~${total}s`;
-    }
-    const minutes = Math.floor(total / 60);
-    const seconds = total % 60;
-    if (seconds === 0) {
-      return `~${minutes}m`;
-    }
-    return `~${minutes}m ${seconds}s`;
-  };
 </script>
 
 {#if DBState?.db?.showSavingIcon && saving.state}
@@ -40,9 +21,6 @@
       <SaveIcon size={16} />
       <span class="text-xs font-semibold tabular-nums"
         >{Math.round(clampPercent(saving.percent))}%</span
-      >
-      <span class="text-[11px] text-white/85 tabular-nums"
-        >{formatEta(saving.etaSeconds)}</span
       >
     </div>
     <div class="mt-1.5 h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
