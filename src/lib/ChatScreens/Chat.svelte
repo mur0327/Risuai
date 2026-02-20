@@ -114,10 +114,7 @@
     async function toggleEditMode(enterEdit: boolean) {
         const sc = document.querySelector('.default-chat-screen') as HTMLElement | null;
 
-        // Capture distance from bottom before layout change
-        const distFromBottom = sc
-            ? sc.scrollHeight - sc.scrollTop - sc.clientHeight
-            : 0;
+        const scrollTopBefore = sc?.scrollTop ?? 0;
 
         if (enterEdit) {
             editMode = true;
@@ -128,9 +125,8 @@
 
         await tick();
 
-        // Restore same distance from bottom after textarea appears/disappears
         if (sc) {
-            sc.scrollTop = sc.scrollHeight - sc.clientHeight - distFromBottom;
+            sc.scrollTop = scrollTopBefore;
         }
     }
 

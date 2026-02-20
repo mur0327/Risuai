@@ -172,19 +172,16 @@
         const wasAtBottom = checkIfAtBottom();
         const scrollContainer = chatBody?.parentElement;
 
-        // Scroll preservation: capture distance from bottom before DOM changes.
-        // In flex-col-reverse, anchoring to "distance from bottom" is stable
-        // regardless of index shifts, element remounts, or height changes.
+        // Scroll preservation on edit/delete: in flex-col-reverse, content above
+        // the changed element (older messages) keeps its position, so restoring
+        // the same scrollTop keeps the viewport stable.
         const shouldPreserveScroll = scrollContainer && previousLength > 0 && messages.length <= previousLength;
-        const distFromBottom = shouldPreserveScroll
-            ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight
-            : 0;
+        const scrollTopBefore = shouldPreserveScroll ? scrollContainer.scrollTop : 0;
 
         updateChatBody();
 
-        // Restore: keep the same distance from bottom
         if (shouldPreserveScroll) {
-            scrollContainer.scrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight - distFromBottom;
+            scrollContainer.scrollTop = scrollTopBefore;
         }
 
         const currentChatRoomId = getCurrentChatRoomId();
