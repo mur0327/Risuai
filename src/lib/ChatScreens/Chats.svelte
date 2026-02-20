@@ -171,16 +171,40 @@
         void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
         const wasAtBottom = checkIfAtBottom();
 
-        // Save scroll position before DOM update for in-place edits (partial edit, toggle, etc.)
+        // Anchor-based scroll preservation for in-place edits AND deletions
         const scrollContainer = chatBody?.parentElement;
-        const isInPlaceEdit = messages.length === previousLength && previousLength > 0;
-        const savedScrollTop = (isInPlaceEdit && scrollContainer) ? scrollContainer.scrollTop : null;
+        let anchorEl: Element | null = null;
+        let anchorTop: number | null = null;
+        const shouldPreserveScroll = previousLength > 0 && messages.length <= previousLength;
+        if (shouldPreserveScroll && scrollContainer) {
+            // Find a visible chat element to use as scroll anchor
+            const chatEls = chatBody.querySelectorAll('[data-chat-index]');
+            const scRect = scrollContainer.getBoundingClientRect();
+            for (const el of chatEls) {
+                const r = el.getBoundingClientRect();
+                if (r.top < scRect.bottom && r.bottom > scRect.top) {
+                    anchorEl = el;
+                    anchorTop = r.top;
+                    break;
+                }
+            }
+        }
 
         updateChatBody()
 
-        // Restore scroll position after in-place edit to prevent scroll jumping
-        if (savedScrollTop !== null && scrollContainer) {
-            scrollContainer.scrollTop = savedScrollTop;
+        // Restore scroll by re-anchoring to the same element
+        if (anchorEl && anchorTop !== null && scrollContainer) {
+            const idx = anchorEl.getAttribute('data-chat-index');
+            const newAnchor = idx != null
+                ? chatBody.querySelector(`[data-chat-index="${idx}"]`)
+                : null;
+            if (newAnchor) {
+                const newTop = newAnchor.getBoundingClientRect().top;
+                const drift = newTop - anchorTop;
+                if (Math.abs(drift) > 1) {
+                    scrollContainer.scrollTop += drift;
+                }
+            }
         }
 
         const currentChatRoomId = getCurrentChatRoomId();
