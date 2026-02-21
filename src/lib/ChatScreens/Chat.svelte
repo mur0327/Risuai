@@ -114,8 +114,8 @@
     async function toggleEditMode(enterEdit: boolean) {
         const sc = document.querySelector('.default-chat-screen') as HTMLElement | null;
 
-        const scrollTopBefore = sc?.scrollTop ?? 0;
-        const scrollHeightBefore = sc?.scrollHeight ?? 0;
+        const anchor = sc?.querySelector(`[data-chat-index="${idx}"]`);
+        const anchorTop = anchor?.getBoundingClientRect().top ?? null;
 
         if (enterEdit) {
             editMode = true;
@@ -126,16 +126,29 @@
 
         await tick();
 
-        // Compensate: keep same distance-from-top despite scrollHeight changes.
-        // In flex-col-reverse, scrollTop is negative. The invariant is:
-        //   distFromTop = scrollHeight + scrollTop (constant)
-        // So: newScrollTop = scrollTopBefore + scrollHeightBefore - newScrollHeight
         const restore = () => {
-            if (sc) sc.scrollTop = scrollTopBefore + scrollHeightBefore - sc.scrollHeight;
+            if (!sc || anchorTop === null) return;
+            const a = sc.querySelector(`[data-chat-index="${idx}"]`);
+            if (!a) return;
+            sc.scrollTop += a.getBoundingClientRect().top - anchorTop;
         };
 
         restore();
         requestAnimationFrame(restore);
+
+        // Async markdown rendering may resize the element over multiple frames.
+        // ResizeObserver keeps correcting scroll until the element stabilizes.
+        const target = sc?.querySelector(`[data-chat-index="${idx}"]`);
+        if (target) {
+            let debounce: number;
+            const observer = new ResizeObserver(() => {
+                restore();
+                clearTimeout(debounce);
+                debounce = window.setTimeout(() => observer.disconnect(), 200);
+            });
+            observer.observe(target);
+            window.setTimeout(() => observer.disconnect(), 2000);
+        }
     }
 
     function handlePartialEditSave(e: CustomEvent<{ newData: string }>) {
