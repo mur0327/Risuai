@@ -632,6 +632,7 @@ export const languageKorean = {
     "autoTranslation": "자동 번역",
     "fullscreen": "전체 화면",
     "playMessage": "메시지 소리 출력",
+    "messageSoundVolume": "메시지 소리 볼륨",
     "iconSize": "아이콘 크기",
     "createGroup": "그룹 챗 만들기",
     "groupIcon": "그룹 아이콘",

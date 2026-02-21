@@ -32,6 +32,7 @@ import { getModelInfo, LLMFlags } from "../model/modellist";
 import { hypaMemoryV3 } from "./memory/hypav3";
 import { getModuleAssets, getModuleToggles } from "./modules";
 import { readImage } from "../globalApi.svelte";
+import sendSound from '../../etc/send.mp3'
 
 export interface OpenAIChat{
     role: 'system'|'user'|'assistant'|'function'
@@ -137,6 +138,25 @@ export async function sendChat(chatProcessIndex = -1,arg:{
             return data.trim()
         }
         return data.trim()
+    }
+
+    function shouldPlayMessageSoundOnComplete() {
+        return chatProcessIndex === -1
+            && DBState.db.playMessage
+            && !arg.preview
+            && !arg.previewPrompt
+            && !abortSignal.aborted
+    }
+
+    function completeWithMessageSound() {
+        if(shouldPlayMessageSoundOnComplete()){
+            try {
+                const audio = new Audio(sendSound)
+                audio.volume = (DBState.db.messageSoundVolume ?? 50) / 100
+                audio.play().catch(() => {})
+            } catch (error) {}
+        }
+        return true
     }
 
     function throwError(error:string){
@@ -307,7 +327,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                     return false
                 }
             }
-            return true
+            return completeWithMessageSound()
         }
         else{
             currentChar = findCharacterbyIdwithCache(nowChatroom.characters[chatProcessIndex])
@@ -1827,7 +1847,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
 
 
 
-                return true
+                return completeWithMessageSound()
             }
 
             function shuffleArray(array:string[]) {
@@ -1944,7 +1964,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
                 }
             }
 
-            return true
+            return completeWithMessageSound()
 
 
         }
@@ -1984,7 +2004,7 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         DBState.db.characters[selectedChar].chats[selectedChat].message[lastMessageIndex].generationInfo = generationInfo
     }
 
-    return true
+    return completeWithMessageSound()
 }
 
 function systemizeChat(chat:OpenAIChat[]){

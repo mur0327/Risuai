@@ -219,7 +219,7 @@
 
     <span class="text-textcolor">{language.assetWidth}</span>
     <SliderInput min={-1} max={40} step={1} bind:value={DBState.db.assetWidth} customText={
-        (DBState.db.assetWidth === -1) ? "Unlimited" : 
+        (DBState.db.assetWidth === -1) ? "Unlimited" :
         (DBState.db.assetWidth === 0) ? "Hidden" : (`${(DBState.db.assetWidth).toFixed(1)} rem`)
     } marginBottom />
 
@@ -289,6 +289,15 @@
     <div class="flex items-center mt-2">
         <Check bind:check={DBState.db.playMessageOnTranslateEnd } name={language.playMessageOnTranslateEnd}/>
     </div>
+
+    <span class="text-textcolor mt-2">{language.messageSoundVolume}</span>
+    <SliderInput
+        min={0}
+        max={100}
+        step={1}
+        bind:value={DBState.db.messageSoundVolume}
+        customText={`${Math.round(DBState.db.messageSoundVolume ?? 50)}%`}
+    />
 
     <div class="flex items-center mt-2">
         <Check bind:check={DBState.db.roundIcons} name={language.roundIcons}/>
@@ -404,7 +413,7 @@
         <Check bind:check={DBState.db.notification} name={language.notification} onChange={async (e) => {
             let hasPermission = {state: 'denied'}
             try {
-                hasPermission = await navigator.permissions.query({name: 'notifications'})                
+                hasPermission = await navigator.permissions.query({name: 'notifications'})
             } catch (error) {
                 //for browsers that do not support permissions api
             }

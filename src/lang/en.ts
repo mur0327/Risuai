@@ -729,6 +729,7 @@ export const languageEnglish = {
     autoTranslation: "Auto Translation",
     fullscreen: "Fullscreen",
     playMessage: "Play Message Audio",
+    messageSoundVolume: "Message Sound Volume",
     iconSize: "Icon Size",
     createGroup: "Create Group Chat",
     groupIcon: "Group Icon",

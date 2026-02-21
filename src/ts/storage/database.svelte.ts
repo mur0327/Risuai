@@ -125,6 +125,13 @@ export function setDatabase(data:Database){
     if(checkNullish(data.playMessage)){
         data.playMessage = false
     }
+    if(checkNullish(data.messageSoundVolume)){
+        data.messageSoundVolume = 50
+    }
+    if(!Number.isFinite(data.messageSoundVolume)){
+        data.messageSoundVolume = 50
+    }
+    data.messageSoundVolume = Math.round(Math.min(Math.max(data.messageSoundVolume, 0), 100))
     if(checkNullish(data.iconsize)){
         data.iconsize = 100
     }
@@ -753,6 +760,7 @@ export interface Database{
     autoTranslate: boolean
     fullScreen:boolean
     playMessage:boolean
+    messageSoundVolume:number
     iconsize:number
     theme: string
     subModel:string

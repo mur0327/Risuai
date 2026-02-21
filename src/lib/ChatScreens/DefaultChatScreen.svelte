@@ -13,7 +13,6 @@
     import { language } from "../../lang";
     import { isExpTranslator, translate } from "../../ts/translator/translator";
     import { alertError, alertNormal, alertWait, showHypaV2Alert } from "../../ts/alert";
-    import sendSound from '../../etc/send.mp3'
     import { processScript } from "src/ts/process/scripts";
     import CreatorQuote from "./CreatorQuote.svelte";
     import { stopTTS } from "src/ts/process/tts";
@@ -33,7 +32,7 @@
     import PluginDefinedIcon from '../Others/PluginDefinedIcon.svelte';
 
     const loadPlaygroundMenu = () => import('../Playground/PlaygroundMenu.svelte').then(m => m.default);
-    
+
     interface Props {
         openModuleList?: boolean;
         openChatList?: boolean;
@@ -118,7 +117,7 @@
                 }
 
                 element.scrollIntoView({behavior: "instant", block: "start"})
-                
+
                 // Small delay and scroll again to ensure position is correct after any final layout adjustments
                 await sleep(50)
                 element.scrollIntoView({behavior: "instant", block: "start"})
@@ -321,10 +320,6 @@
         }
         lastCharId = $selectedCharID
         $doingChat = false
-        if(DBState.db.playMessage){
-            const audio = new Audio(sendSound);
-            audio.play().catch(() => {});
-        }
     }
 
     function abortChat(){
@@ -501,7 +496,7 @@
         }
     }
 
-    
+
 </script>
 
 
@@ -511,7 +506,7 @@
 <div class="w-full h-full relative" style={customStyle} onclick={() => {
     openMenu = false
 }}>
-    
+
     {#if showNewMessageButton}
         {#if (DBState.db.newMessageButtonStyle === 'bottom-center' || !DBState.db.newMessageButtonStyle)}
             <button class="absolute bottom-16 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-2 hover:bg-blue-600 transition-colors" onclick={scrollToBottom}>
@@ -804,7 +799,7 @@
                     </Button>
                 </button>
             {/if}
-            
+
             <Chats
                 bind:this={chatsInstance}
                 messages={currentChat}
@@ -892,7 +887,7 @@
                         </div>
                     {/if}
 
-                    
+
                     <!-- svelte-ignore block_empty -->
                     {#if DBState.db.characters[$selectedCharID].ttsMode === 'webspeech' || DBState.db.characters[$selectedCharID].ttsMode === 'elevenlab'}
                         <div class="flex items-center cursor-pointer hover:text-green-500 transition-colors" onclick={() => {
@@ -961,7 +956,7 @@
                             </div>
                         {/if}
                     {/if}
-                    
+
                     {#if DBState.db.translator !== ''}
                         <div class={"flex items-center cursor-pointer "+ (DBState.db.useAutoTranslateInput ? 'text-green-500':'lg:hover:text-green-500')} onclick={() => {
                             DBState.db.useAutoTranslateInput = !DBState.db.useAutoTranslateInput
@@ -969,9 +964,9 @@
                             <GlobeIcon />
                             <span class="ml-2">{language.autoTranslateInput}</span>
                         </div>
-                        
+
                     {/if}
-            
+
                     <div class="flex items-center cursor-pointer hover:text-green-500 transition-colors" onclick={() => {
                         screenShot()
                     }}>
@@ -1068,7 +1063,7 @@
     }
 
     @keyframes spin {
-        
+
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
