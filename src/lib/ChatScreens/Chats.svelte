@@ -6,7 +6,7 @@
     import { createSimpleCharacter, DBState, selectedCharID, ReloadChatPointer } from 'src/ts/stores.svelte';
     import { chatFoldedStateMessageIndex } from 'src/ts/globalApi.svelte';
     import { get } from 'svelte/store';
-
+    
     const getCurrentChatRoomId = () => {
         const charId = get(selectedCharID);
         if (charId < 0) return null;
@@ -114,7 +114,7 @@
                 }
             }
             nextHash = currentHash;
-
+            
         }
 
         //@ts-expect-error Set<T> requires type arg, and Set.difference needs 'esnext' lib (polyfilled by Core-js)
@@ -132,7 +132,7 @@
         });
 
         hashes = currentHashes;
-
+        
     };
 
     onDestroy(() => {
@@ -167,25 +167,15 @@
     let previousChatRoomId: string | null = null;
 
     $effect(() => {
-        void $ReloadChatPointer;
+        console.log('Updating Chats');
+        void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
         const wasAtBottom = checkIfAtBottom();
-        const scrollContainer = chatBody?.parentElement;
-
-        // Preserve scroll position on partial edit/delete.
-        // overflow-anchor:none on the scroll container prevents browser interference,
-        // so restoring the same scrollTop keeps the viewport stable.
-        const shouldPreserveScroll = scrollContainer && previousLength > 0 && messages.length <= previousLength;
-        const scrollTopBefore = scrollContainer?.scrollTop ?? 0;
-
-        updateChatBody();
-
-        if (shouldPreserveScroll) {
-            scrollContainer.scrollTop = scrollTopBefore;
-        }
-
+        updateChatBody()
+        
         const currentChatRoomId = getCurrentChatRoomId();
         const isSameChat = currentChatRoomId === previousChatRoomId;
-
+        
+        // Only auto-scroll if it's the same chat and new messages were added
         if(isSameChat && messages.length > previousLength){
             const lastMsg = messages[messages.length - 1];
             if(lastMsg && lastMsg.role === 'char' && DBState.db.autoScrollToNewMessage){
