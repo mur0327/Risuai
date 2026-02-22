@@ -56,6 +56,7 @@
     $effect(() => {
         void $selectedCharID;
         untrack(() => {
+            if($selectedCharID < 0) return;
             if(isChatFolded && currentChat.length > 0){
                 loadPages = DBState.db.chatFoldKeepCount ?? 6;
                 foldChatToMessage(currentChat.length - 1);
