@@ -3,7 +3,7 @@
     import Suggestion from './Suggestion.svelte';
     import { CameraIcon, DatabaseIcon, DicesIcon, GlobeIcon, ImagePlusIcon, LanguagesIcon, Laugh, MenuIcon, MicOffIcon, PackageIcon, Plus, RefreshCcwIcon, ReplyIcon, Send, StepForwardIcon, XIcon, BrainIcon, ArrowDown, FoldVerticalIcon } from "@lucide/svelte";
     import { selectedCharID, PlaygroundStore, createSimpleCharacter, hypaV3ModalOpen, ScrollToMessageStore, additionalChatMenu, additionalFloatingActionButtons } from "../../ts/stores.svelte";
-    import { tick } from 'svelte';
+    import { tick, untrack } from 'svelte';
     import Chat from "./Chat.svelte";
     import { type Message } from "../../ts/storage/database.svelte";
     import { DBState } from 'src/ts/stores.svelte';
@@ -19,7 +19,7 @@
     import { stopTTS } from "src/ts/process/tts";
     import MainMenu from '../UI/MainMenu.svelte';
     import AssetInput from './AssetInput.svelte';
-    import { aiLawApplies, chatFoldedState, chatFoldedStateMessageIndex, downloadFile } from 'src/ts/globalApi.svelte';
+    import { aiLawApplies, chatFoldedState, chatFoldedStateMessageIndex, downloadFile, foldChatToMessage } from 'src/ts/globalApi.svelte';
     import { runTrigger } from 'src/ts/process/triggers';
     import { v4 } from 'uuid';
     import { PreUnreroll, Prereroll } from 'src/ts/process/prereroll';
@@ -55,9 +55,13 @@
     let isChatFolded = $state(false)
     $effect(() => {
         void $selectedCharID;
-        if(isChatFolded){
-            loadPages = DBState.db.chatFoldKeepCount ?? 6;
-        }
+        void currentChat.length;
+        untrack(() => {
+            if(isChatFolded && currentChat.length > 0){
+                loadPages = DBState.db.chatFoldKeepCount ?? 6;
+                foldChatToMessage(currentChat.length - 1);
+            }
+        });
     })
     let chatsInstance: any = $state()
     let isScrollingToMessage = $state(false)
@@ -807,6 +811,7 @@
                     <Button className="max-w-xl w-full" onclick={() => {
                         loadPages += chatFoldedStateMessageIndex.index + 1
                         chatFoldedState.data = null
+                        isChatFolded = false
                     }}>
                         {language.loadMore}
                     </Button>
@@ -1023,10 +1028,16 @@
                         <span class="ml-2">{language.modules}</span>
                     </div>
 
-                    {#if currentChat.length > (DBState.db.chatFoldKeepCount ?? 6)}
+                    {#if isChatFolded || currentChat.length > (DBState.db.chatFoldKeepCount ?? 6)}
                         <div class={"flex items-center cursor-pointer " + (isChatFolded ? 'text-green-500' : 'lg:hover:text-green-500')} onclick={() => {
                             isChatFolded = !isChatFolded
-                            loadPages = isChatFolded ? (DBState.db.chatFoldKeepCount ?? 6) : 30
+                            if (isChatFolded) {
+                                loadPages = DBState.db.chatFoldKeepCount ?? 6
+                                foldChatToMessage(currentChat.length - 1)
+                            } else {
+                                loadPages = 30
+                                chatFoldedState.data = null
+                            }
                         }}>
                             <FoldVerticalIcon />
                             <span class="ml-2">{language.foldChat}</span>
