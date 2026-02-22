@@ -806,7 +806,7 @@
                 {/await}
             {:else}
 
-            {#if chatFoldedStateMessageIndex.index !== -1}
+            {#if chatFoldedStateMessageIndex.index !== -1 && !isChatFolded}
                 <button class="w-full flex justify-center max-w-full p-4">
                     <Button className="max-w-xl w-full" onclick={() => {
                         loadPages += chatFoldedStateMessageIndex.index + 1
@@ -1031,6 +1031,7 @@
                     {#if isChatFolded || currentChat.length > (DBState.db.chatFoldKeepCount ?? 6)}
                         <div class={"flex items-center cursor-pointer " + (isChatFolded ? 'text-green-500' : 'lg:hover:text-green-500')} onclick={() => {
                             isChatFolded = !isChatFolded
+                            openMenu = false
                             if (isChatFolded) {
                                 loadPages = DBState.db.chatFoldKeepCount ?? 6
                                 foldChatToMessage(currentChat.length - 1)
