@@ -165,29 +165,17 @@
 
     let previousLength = 0;
     let previousChatRoomId: string | null = null;
-    let previousLoadPages = 0;
-    let previousReloadPointer: Record<number, number> = {};
 
     $effect(() => {
         console.log('Updating Chats');
-        const currentReloadPointer = $ReloadChatPointer;
-        const reloadPointerChanged = currentReloadPointer !== previousReloadPointer;
+        void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
         const wasAtBottom = checkIfAtBottom();
-        const loadPagesChanged = loadPages !== previousLoadPages;
-        previousLoadPages = loadPages;
         updateChatBody()
 
         const currentChatRoomId = getCurrentChatRoomId();
         const isSameChat = currentChatRoomId === previousChatRoomId;
 
-        // Skip auto-scroll when loadPages changed within the same chat (e.g. fold/unfold)
-        if(loadPagesChanged && isSameChat){
-            previousLength = messages.length;
-            previousChatRoomId = currentChatRoomId;
-            return;
-        }
-
-        // Auto-scroll if it's the same chat and new messages were added
+        // Only auto-scroll if it's the same chat and new messages were added
         if(isSameChat && messages.length > previousLength){
             const lastMsg = messages[messages.length - 1];
             if(lastMsg && lastMsg.role === 'char' && DBState.db.autoScrollToNewMessage){
@@ -203,19 +191,8 @@
                 }
             }
         }
-        // Auto-scroll only for secondary model (trigger/lua) content changes,
-        // not for manual user edits/deletes
-        else if(isSameChat && messages.length === previousLength && wasAtBottom && reloadPointerChanged && DBState.db.autoScrollToNewMessage){
-            setTimeout(() => {
-                const element = chatBody?.firstElementChild;
-                if(element){
-                    element.scrollIntoView({ behavior: 'instant', block: 'start' });
-                }
-            }, 100);
-        }
         previousLength = messages.length;
         previousChatRoomId = currentChatRoomId;
-        previousReloadPointer = currentReloadPointer;
     })
 
 </script>
