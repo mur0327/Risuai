@@ -204,12 +204,12 @@
         // Also auto-scroll when existing message content changes (e.g. secondary model editing)
         // if the user was already at the bottom
         else if(isSameChat && messages.length === previousLength && wasAtBottom && DBState.db.autoScrollToNewMessage){
-            const element = chatBody.firstElementChild;
-            if(element){
-                setTimeout(() => {
+            setTimeout(() => {
+                const element = chatBody?.firstElementChild;
+                if(element){
                     element.scrollIntoView({ behavior: 'instant', block: 'start' });
-                }, 100);
-            }
+                }
+            }, 100);
         }
         previousLength = messages.length;
         previousChatRoomId = currentChatRoomId;
