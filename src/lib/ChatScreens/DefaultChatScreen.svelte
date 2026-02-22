@@ -13,6 +13,7 @@
     import { language } from "../../lang";
     import { isExpTranslator, translate } from "../../ts/translator/translator";
     import { alertError, alertNormal, alertWait, showHypaV2Alert } from "../../ts/alert";
+    import sendSound from '../../etc/send.mp3'
     import { processScript } from "src/ts/process/scripts";
     import CreatorQuote from "./CreatorQuote.svelte";
     import { stopTTS } from "src/ts/process/tts";
@@ -320,6 +321,11 @@
         }
         lastCharId = $selectedCharID
         $doingChat = false
+        if(DBState.db.playMessage){
+            const audio = new Audio(sendSound);
+            audio.volume = (DBState.db.messageSoundVolume ?? 50) / 100;
+            audio.play().catch(() => {});
+        }
     }
 
     function abortChat(){
@@ -563,7 +569,7 @@
             {/await}
         {/if}
     {:else}
-        <div class="h-full w-full flex flex-col-reverse overflow-y-auto relative default-chat-screen" style="overflow-anchor:none" onscroll={(e) => {
+        <div class="h-full w-full flex flex-col-reverse overflow-y-auto relative default-chat-screen" onscroll={(e) => {
             //@ts-expect-error scrollHeight/clientHeight/scrollTop don't exist on EventTarget, but target is HTMLElement here
             const scrolled = (e.target.scrollHeight - e.target.clientHeight + e.target.scrollTop)
             if(scrolled < 100 && DBState.db.characters[$selectedCharID].chats[DBState.db.characters[$selectedCharID].chatPage].message.length > loadPages){
