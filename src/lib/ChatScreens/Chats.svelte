@@ -166,10 +166,12 @@
     let previousLength = 0;
     let previousChatRoomId: string | null = null;
     let previousLoadPages = 0;
+    let previousReloadPointer: Record<number, number> = {};
 
     $effect(() => {
         console.log('Updating Chats');
-        void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
+        const currentReloadPointer = $ReloadChatPointer;
+        const reloadPointerChanged = currentReloadPointer !== previousReloadPointer;
         const wasAtBottom = checkIfAtBottom();
         const loadPagesChanged = loadPages !== previousLoadPages;
         previousLoadPages = loadPages;
@@ -201,9 +203,9 @@
                 }
             }
         }
-        // Also auto-scroll when existing message content changes (e.g. secondary model editing)
-        // if the user was already at the bottom
-        else if(isSameChat && messages.length === previousLength && wasAtBottom && DBState.db.autoScrollToNewMessage){
+        // Auto-scroll only for secondary model (trigger/lua) content changes,
+        // not for manual user edits/deletes
+        else if(isSameChat && messages.length === previousLength && wasAtBottom && reloadPointerChanged && DBState.db.autoScrollToNewMessage){
             setTimeout(() => {
                 const element = chatBody?.firstElementChild;
                 if(element){
@@ -213,6 +215,7 @@
         }
         previousLength = messages.length;
         previousChatRoomId = currentChatRoomId;
+        previousReloadPointer = currentReloadPointer;
     })
 
 </script>
