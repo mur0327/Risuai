@@ -1390,6 +1390,7 @@ export const languageKorean = {
     "goToChat": "채팅으로 이동",
     "duplicatePluginFoundUpdateIt": "중복된 플러그인이 발견되었습니다. 기존 플러그인을 업데이트하시겠습니까?",
     "loadMore": "더 보기",
+    "foldChat": "채팅 접기",
     "pluginUpdateFoundInstallIt": "플러그인 업데이트가 발견되었습니다. 업데이트를 설치하시겠습니까?",
     "noRequestLogs": "요청 로그가 없습니다.",
     "translateCode": "코드 주소 변환",

@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import Suggestion from './Suggestion.svelte';
-    import { CameraIcon, DatabaseIcon, DicesIcon, GlobeIcon, ImagePlusIcon, LanguagesIcon, Laugh, MenuIcon, MicOffIcon, PackageIcon, Plus, RefreshCcwIcon, ReplyIcon, Send, StepForwardIcon, XIcon, BrainIcon, ArrowDown } from "@lucide/svelte";
+    import { CameraIcon, DatabaseIcon, DicesIcon, GlobeIcon, ImagePlusIcon, LanguagesIcon, Laugh, MenuIcon, MicOffIcon, PackageIcon, Plus, RefreshCcwIcon, ReplyIcon, Send, StepForwardIcon, XIcon, BrainIcon, ArrowDown, FoldVerticalIcon } from "@lucide/svelte";
     import { selectedCharID, PlaygroundStore, createSimpleCharacter, hypaV3ModalOpen, ScrollToMessageStore, additionalChatMenu, additionalFloatingActionButtons } from "../../ts/stores.svelte";
     import { tick } from 'svelte';
     import Chat from "./Chat.svelte";
@@ -52,6 +52,13 @@
     let toggleStickers:boolean = $state(false)
     let fileInput:string[] = $state([])
     let showNewMessageButton = $state(false)
+    let isChatFolded = $state(false)
+    $effect(() => {
+        void $selectedCharID;
+        if(isChatFolded){
+            loadPages = DBState.db.chatFoldKeepCount ?? 6;
+        }
+    })
     let chatsInstance: any = $state()
     let isScrollingToMessage = $state(false)
     let { openModuleList = $bindable(false), openChatList = $bindable(false), customStyle = '' }: Props = $props();
@@ -1015,6 +1022,16 @@
                         <PackageIcon />
                         <span class="ml-2">{language.modules}</span>
                     </div>
+
+                    {#if currentChat.length > (DBState.db.chatFoldKeepCount ?? 6)}
+                        <div class={"flex items-center cursor-pointer " + (isChatFolded ? 'text-green-500' : 'lg:hover:text-green-500')} onclick={() => {
+                            isChatFolded = !isChatFolded
+                            loadPages = isChatFolded ? (DBState.db.chatFoldKeepCount ?? 6) : 30
+                        }}>
+                            <FoldVerticalIcon />
+                            <span class="ml-2">{language.foldChat}</span>
+                        </div>
+                    {/if}
 
                     {#if DBState.db.sideMenuRerollButton}
                         <div class="flex items-center cursor-pointer hover:text-green-500 transition-colors" onclick={reroll}>

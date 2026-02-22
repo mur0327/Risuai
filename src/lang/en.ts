@@ -1488,6 +1488,7 @@ export const languageEnglish = {
     branch: "Branch",
     branchedText: "This chat has been branched from {}.",
     loadMore: "Load More",
+    foldChat: "Fold Chat",
     disableMessage: "Disable Message",
     disableAbove: "Cut Messages for AI",
     autoScrollToNewMessage: "Auto scroll to new message",

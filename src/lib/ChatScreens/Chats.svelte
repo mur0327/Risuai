@@ -6,7 +6,7 @@
     import { createSimpleCharacter, DBState, selectedCharID, ReloadChatPointer } from 'src/ts/stores.svelte';
     import { chatFoldedStateMessageIndex } from 'src/ts/globalApi.svelte';
     import { get } from 'svelte/store';
-    
+
     const getCurrentChatRoomId = () => {
         const charId = get(selectedCharID);
         if (charId < 0) return null;
@@ -114,7 +114,7 @@
                 }
             }
             nextHash = currentHash;
-            
+
         }
 
         //@ts-expect-error Set<T> requires type arg, and Set.difference needs 'esnext' lib (polyfilled by Core-js)
@@ -132,7 +132,7 @@
         });
 
         hashes = currentHashes;
-        
+
     };
 
     onDestroy(() => {
@@ -165,17 +165,27 @@
 
     let previousLength = 0;
     let previousChatRoomId: string | null = null;
+    let previousLoadPages = 0;
 
     $effect(() => {
         console.log('Updating Chats');
         void $ReloadChatPointer; // Make $effect track ReloadChatPointer changes
         const wasAtBottom = checkIfAtBottom();
+        const loadPagesChanged = loadPages !== previousLoadPages;
+        previousLoadPages = loadPages;
         updateChatBody()
-        
+
         const currentChatRoomId = getCurrentChatRoomId();
         const isSameChat = currentChatRoomId === previousChatRoomId;
-        
-        // Only auto-scroll if it's the same chat and new messages were added
+
+        // Skip auto-scroll when loadPages changed within the same chat (e.g. fold/unfold)
+        if(loadPagesChanged && isSameChat){
+            previousLength = messages.length;
+            previousChatRoomId = currentChatRoomId;
+            return;
+        }
+
+        // Auto-scroll if it's the same chat and new messages were added
         if(isSameChat && messages.length > previousLength){
             const lastMsg = messages[messages.length - 1];
             if(lastMsg && lastMsg.role === 'char' && DBState.db.autoScrollToNewMessage){
@@ -189,6 +199,16 @@
                 } else {
                     hasNewUnreadMessage = true;
                 }
+            }
+        }
+        // Also auto-scroll when existing message content changes (e.g. secondary model editing)
+        // if the user was already at the bottom
+        else if(isSameChat && messages.length === previousLength && wasAtBottom && DBState.db.autoScrollToNewMessage){
+            const element = chatBody.firstElementChild;
+            if(element){
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'instant', block: 'start' });
+                }, 100);
             }
         }
         previousLength = messages.length;
