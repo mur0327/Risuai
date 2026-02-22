@@ -313,6 +313,12 @@
 
     async function sendChatMain(continued:boolean = false) {
 
+        if (isChatFolded) {
+            const msgs = DBState.db.characters[$selectedCharID].chats[DBState.db.characters[$selectedCharID].chatPage].message
+            if (msgs.length > 0) {
+                foldChatToMessage(msgs.length - 1)
+            }
+        }
         let previousLength = DBState.db.characters[$selectedCharID].chats[DBState.db.characters[$selectedCharID].chatPage].message.length
         messageInput = ''
         abortController = new AbortController()
