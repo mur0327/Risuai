@@ -104,7 +104,7 @@ let checkedPaths: string[] = []
 
 /**
  * Gets the source URL of a file.
- * 
+ *
  * @param {string} loc - The location of the file.
  * @returns {Promise<string>} - A promise that resolves to the source URL of the file.
  */
@@ -198,7 +198,7 @@ let appDataDirPath = ''
 
 /**
  * Reads an image file and returns its data.
- * 
+ *
  * @param {string} data - The path to the image file.
  * @returns {Promise<Uint8Array>} - A promise that resolves to the data of the image file.
  */
@@ -219,7 +219,7 @@ export async function readImage(data: string) {
 
 /**
  * Saves an asset file with the given data, custom ID, and file name.
- * 
+ *
  * @param {Uint8Array} data - The data of the asset file.
  * @param {string} [customId=''] - The custom ID for the asset file.
  * @param {string} [fileName=''] - The name of the asset file.
@@ -259,7 +259,7 @@ export async function saveAsset(data: Uint8Array, customId: string = '', fileNam
 
 /**
  * Loads an asset file with the given ID.
- * 
+ *
  * @param {string} id - The ID of the asset file to load.
  * @returns {Promise<Uint8Array>} - A promise that resolves to the data of the loaded asset file.
  */
@@ -336,7 +336,7 @@ function finishSavingProgress(_context: SavingProgressContext) {
 
 /**
  * Saves the current state of the database.
- * 
+ *
  * @returns {Promise<void>} - A promise that resolves when the database has been saved.
  */
 export let requiresFullEncoderReload = $state({
@@ -540,7 +540,7 @@ export async function saveDb() {
 
 /**
  * Retrieves the database backups.
- * 
+ *
  * @returns {Promise<number[]>} - A promise that resolves to an array of backup timestamps.
  */
 export async function getDbBackups() {
@@ -589,7 +589,7 @@ export function setUsingSw(value: boolean) {
 
 /**
  * Retrieves fetch data for a given chat ID.
- * 
+ *
  * @param {string} id - The chat ID to search for in the fetch log.
  * @returns {fetchLog | null} - The fetch log entry if found, otherwise null.
  */
@@ -606,7 +606,7 @@ const knownHostes = ["localhost", "127.0.0.1", "0.0.0.0"];
 
 /**
  * Interface representing the arguments for the global fetch function.
- * 
+ *
  * @interface GlobalFetchArgs
  * @property {boolean} [plainFetchForce] - Whether to force plain fetch.
  * @property {any} [body] - The body of the request.
@@ -632,7 +632,7 @@ interface GlobalFetchArgs {
 
 /**
  * Interface representing the result of the global fetch function.
- * 
+ *
  * @interface GlobalFetchResult
  * @property {boolean} ok - Whether the request was successful.
  * @property {any} data - The data returned from the request.
@@ -647,7 +647,7 @@ interface GlobalFetchResult {
 
 /**
  * Adds a fetch log entry.
- * 
+ *
  * @param {Object} arg - The arguments for the fetch log entry.
  * @param {any} arg.body - The body of the request.
  * @param {{ [key: string]: string }} [arg.headers] - The headers of the request.
@@ -684,7 +684,7 @@ export function addFetchLog(arg: {
 
 /**
  * Performs a global fetch request.
- * 
+ *
  * @param {string} url - The URL to fetch.
  * @param {GlobalFetchArgs} [arg={}] - The arguments for the fetch request.
  * @returns {Promise<GlobalFetchResult>} - The result of the fetch request.
@@ -734,7 +734,7 @@ export async function globalFetch(url: string, arg: GlobalFetchArgs = {}): Promi
 
 /**
  * Adds a fetch log entry in the global fetch log.
- * 
+ *
  * @param {any} response - The response data.
  * @param {boolean} success - Indicates if the fetch was successful.
  * @param {string} url - The URL of the fetch request.
@@ -773,7 +773,7 @@ function addFetchLogInGlobalFetch(response: any, success: boolean, url: string, 
 
 /**
  * Performs a fetch request using plain fetch.
- * 
+ *
  * @param {string} url - The URL to fetch.
  * @param {GlobalFetchArgs} arg - The arguments for the fetch request.
  * @returns {Promise<GlobalFetchResult>} - The result of the fetch request.
@@ -793,7 +793,7 @@ async function fetchWithPlainFetch(url: string, arg: GlobalFetchArgs): Promise<G
 
 /**
  * Performs a fetch request using userscript provided fetch.
- * 
+ *
  * @param {string} url - The URL to fetch.
  * @param {GlobalFetchArgs} arg - The arguments for the fetch request.
  * @returns {Promise<GlobalFetchResult>} - The result of the fetch request.
@@ -813,7 +813,7 @@ async function fetchWithUSFetch(url: string, arg: GlobalFetchArgs): Promise<Glob
 
 /**
  * Performs a fetch request using Tauri.
- * 
+ *
  * @param {string} url - The URL to fetch.
  * @param {GlobalFetchArgs} arg - The arguments for the fetch request.
  * @returns {Promise<GlobalFetchResult>} - The result of the fetch request.
@@ -833,7 +833,7 @@ async function fetchWithTauri(url: string, arg: GlobalFetchArgs): Promise<Global
 
 /**
  * Performs a fetch request using a proxy.
- * 
+ *
  * @param {string} url - The URL to fetch.
  * @param {GlobalFetchArgs} arg - The arguments for the fetch request.
  * @returns {Promise<GlobalFetchResult>} - The result of the fetch request.
@@ -886,14 +886,14 @@ async function fetchWithProxy(url: string, arg: GlobalFetchArgs): Promise<Global
 
 /**
  * Regular expression to match backslashes.
- * 
+ *
  * @constant {RegExp}
  */
 const re = /\\/g;
 
 /**
  * Gets the basename of a given path.
- * 
+ *
  * @param {string} data - The path to get the basename from.
  * @returns {string} - The basename of the path.
  */
@@ -905,7 +905,7 @@ export function getBasename(data: string) {
 
 /**
  * Retrieves uncleanable resources from the database.
- * 
+ *
  * @param {Database} db - The database to retrieve uncleanable resources from.
  * @param {'basename'|'pure'} [uptype='basename'] - The type of uncleanable resources to retrieve.
  * @returns {string[]} - An array of uncleanable resources.
@@ -915,7 +915,7 @@ export function getUncleanables(db: Database, uptype: 'basename' | 'pure' = 'bas
 
     /**
      * Adds a resource to the uncleanable list if it is not already included.
-     * 
+     *
      * @param {string} data - The resource to add.
      */
     function addUncleanable(data: string) {
@@ -992,7 +992,7 @@ export function getUncleanables(db: Database, uptype: 'basename' | 'pure' = 'bas
 
 /**
  * Replaces database resources with the provided replacer object.
- * 
+ *
  * @param {Database} db - The database object containing resources to be replaced.
  * @param {{[key: string]: string}} replacer - An object mapping original resource keys to their replacements.
  * @returns {Database} - The updated database object with replaced resources.
@@ -1000,7 +1000,7 @@ export function getUncleanables(db: Database, uptype: 'basename' | 'pure' = 'bas
 export function replaceDbResources(db: Database, replacer: { [key: string]: string }): Database {
     /**
      * Replaces a given data string with its corresponding value from the replacer object.
-     * 
+     *
      * @param {string} data - The data string to be replaced.
      * @returns {string} - The replaced data string or the original data if no replacement is found.
      */
@@ -1106,7 +1106,7 @@ export function checkCharOrder() {
 
 /**
  * Retrieves the request log as a formatted string.
- * 
+ *
  * @returns {string} The formatted request log.
  */
 export function getRequestLog() {
@@ -1132,7 +1132,7 @@ export function getFetchLogs() {
 
 /**
  * Opens a URL in the appropriate environment.
- * 
+ *
  * @param {string} url - The URL to open.
  */
 export function openURL(url: string) {
@@ -1146,7 +1146,7 @@ export function openURL(url: string) {
 
 /**
  * Converts FormData to a URL-encoded string.
- * 
+ *
  * @param {FormData} formData - The FormData to convert.
  * @returns {string} The URL-encoded string.
  */
@@ -1169,7 +1169,7 @@ export class TauriWriter {
 
     /**
      * Creates an instance of TauriWriter.
-     * 
+     *
      * @param {string} path - The file path to write to.
      */
     constructor(path: string) {
@@ -1178,7 +1178,7 @@ export class TauriWriter {
 
     /**
      * Writes data to the file.
-     * 
+     *
      * @param {Uint8Array} data - The data to write.
      */
     async write(data: Uint8Array) {
@@ -1205,7 +1205,7 @@ export class LocalWriter {
 
     /**
      * Initializes the writer.
-     * 
+     *
      * @param {string} [name='Binary'] - The name of the file.
      * @param {string[]} [ext=['bin']] - The file extensions.
      * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating success.
@@ -1232,7 +1232,7 @@ export class LocalWriter {
 
     /**
      * Writes backup data to the file.
-     * 
+     *
      * @param {string} name - The name of the backup.
      * @param {Uint8Array} data - The data to write.
      */
@@ -1248,7 +1248,7 @@ export class LocalWriter {
 
     /**
      * Writes data to the file.
-     * 
+     *
      * @param {Uint8Array} data - The data to write.
      */
     async write(data: Uint8Array): Promise<void> {
@@ -1271,7 +1271,7 @@ export class VirtualWriter {
 
     /**
      * Writes data to the buffer.
-     * 
+     *
      * @param {Uint8Array} data - The data to write.
      */
     write(data: Uint8Array): void {
@@ -1468,14 +1468,14 @@ export class AppendableBuffer {
  * @returns {ReadableStream<Uint8Array>} - The new readable stream.
  */
 const pipeFetchLog = (fetchLogIndex: number, readableStream: ReadableStream<Uint8Array>) => {
-    
+
     const splited = readableStream.tee();
-    
+
     (async () => {
         const text = await (new Response(splited[0])).text()
         fetchLog[fetchLogIndex].response = text
     })()
-    
+
     return splited[1]
 }
 
@@ -1696,7 +1696,7 @@ export async function fetchNative(url: string, arg: {
 
 /**
  * Converts a ReadableStream of Uint8Array to a text string.
- * 
+ *
  * @param {ReadableStream<Uint8Array>} stream - The readable stream to convert.
  * @returns {Promise<string>} A promise that resolves to the text content of the stream.
  */
@@ -1718,7 +1718,7 @@ export function toggleFullscreen() {
 
 /**
  * Removes non-Latin characters from a string, replaces multiple spaces with a single space, and trims the string.
- * 
+ *
  * @param {string} data - The input string to be processed.
  * @returns {string} The processed string with non-Latin characters removed, multiple spaces replaced by a single space, and trimmed.
  */
@@ -1730,7 +1730,7 @@ export function trimNonLatin(data: string) {
 
 /**
  * A class that provides a blank writer implementation.
- * 
+ *
  * This class is used to provide a no-op implementation of a writer, making it compatible with other writer interfaces.
  */
 export class BlankWriter {
@@ -1739,7 +1739,7 @@ export class BlankWriter {
 
     /**
      * Initializes the writer.
-     * 
+     *
      * This method does nothing and is provided for compatibility with other writer interfaces.
      */
     async init() {
@@ -1748,9 +1748,9 @@ export class BlankWriter {
 
     /**
      * Writes data to the writer.
-     * 
+     *
      * This method does nothing and is provided for compatibility with other writer interfaces.
-     * 
+     *
      * @param {string} key - The key associated with the data.
      * @param {Uint8Array|string} data - The data to be written.
      */
@@ -1760,7 +1760,7 @@ export class BlankWriter {
 
     /**
      * Ends the writing process.
-     * 
+     *
      * This method does nothing and is provided for compatibility with other writer interfaces.
      */
     async end() {
@@ -1829,7 +1829,7 @@ export class PerformanceDebugger {
 
     /**
      * Ends the timing measurement and records the time difference.
-     * 
+     *
      * @param {string} key - The key to associate with the recorded time.
     */
     endAndRecord(key: string) {
@@ -1842,7 +1842,7 @@ export class PerformanceDebugger {
 
     /**
      * Ends the timing measurement, records the time difference, and starts a new timing measurement.
-     * 
+     *
      * @param {string} key - The key to associate with the recorded time.
     */
     endAndRecordAndStart(key: string) {
@@ -1931,7 +1931,7 @@ export function toGetter<T extends object>(
         get(target, prop, receiver) {
 
             const realInstance = getterFn();
-            
+
             if (args?.restrictChildren && args.restrictChildren.includes(prop as string)) {
                 throw new Error(`Access to property '${String(prop)}' is restricted`);
             }
@@ -1990,7 +1990,7 @@ const countriesWithAiLaw = new Set<string>([
     // EU
     // AI Act
     // https://artificialintelligenceact.eu/
-    
+
     "AT",
     "BE",
     "BG",
@@ -2020,9 +2020,9 @@ const countriesWithAiLaw = new Set<string>([
     "ES",
     "SE",
 
-    //China 
+    //China
     //Measures for Labeling of AI-Generated Synthetic Content
-    // 关于印发《人工智能生成合成内容标识办法》的通知 
+    // 关于印发《人工智能生成合成内容标识办法》的通知
     // https://www.cac.gov.cn/2025-03/14/c_1743654684782215.htm
     "CN",
 
@@ -2033,7 +2033,7 @@ const countriesWithAiLaw = new Set<string>([
     //TW isn't under mainland china jurisdiction
     //de facto, de jure in TW law, unlike HK and MO,
     //So we don't include it for now
-    //"TW", 
+    //"TW",
 
     // Republic of Korea
     // AI Basic Act
@@ -2120,6 +2120,9 @@ export function foldChatToMessage(targetMessageIdOrIndex: string | number) {
         const char = getCurrentCharacter()
         const chat = char.chats[char.chatPage]
         const message = chat.message[targetMessageIdOrIndex]
+        if (!message.chatId) {
+            message.chatId = v4();
+        }
         targetMessageId = message.chatId
     }
     else{
