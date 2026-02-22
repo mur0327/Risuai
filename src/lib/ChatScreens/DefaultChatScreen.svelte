@@ -55,7 +55,6 @@
     let isChatFolded = $state(false)
     $effect(() => {
         void $selectedCharID;
-        void currentChat.length;
         untrack(() => {
             if(isChatFolded && currentChat.length > 0){
                 loadPages = DBState.db.chatFoldKeepCount ?? 6;
@@ -329,6 +328,12 @@
         } catch (error) {
             console.error(error)
             alertError(error)
+        }
+        if (isChatFolded) {
+            const msgs = DBState.db.characters[$selectedCharID].chats[DBState.db.characters[$selectedCharID].chatPage].message
+            if (msgs.length > 0) {
+                foldChatToMessage(msgs.length - 1)
+            }
         }
         lastCharId = $selectedCharID
         $doingChat = false
